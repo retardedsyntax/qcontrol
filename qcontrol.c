@@ -423,7 +423,7 @@ int main(int argc, char *argv[])
 	commandcount = 0;
 
 	if (argc > 1 && (strcmp(argv[1], "--help") == 0
-	              || strcmp(argv[1], "-h") == 0)) {
+	              || strcmp(argv[1], "-?") == 0)) {
 		printf("%s", usage);
 		return network_send(argc - 1, argv + 1);
 	} else if (argc > 1 && (strcmp(argv[1], "-V") == 0
