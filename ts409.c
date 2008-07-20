@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2007-2008  Byron Bradley (byron.bbradley@gmail.com)
+ * Copyright (C) 2008  Martin Michlmayr (tbm@cyrius.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +32,7 @@
 
 static int serial;
 static struct termios oldtio, newtio;
-static pthread_t ts209_thread;
+static pthread_t ts409_thread;
 
 static int serial_read(char *buf, int len)
 {
@@ -52,7 +53,7 @@ static int serial_write(char *buf, int len)
 	return err;
 }
 
-int ts209_read_serial_events()
+int ts409_read_serial_events()
 {
 	char buf[100];
 	int err = serial_read(buf, 100);
@@ -63,21 +64,32 @@ int ts209_read_serial_events()
 		call_function("power_button", "%d", 3);
 		break;
 	case 0x73:
+	case 0x75:
+	case 0x77:
+	case 0x79:
 		call_function("fan_error", "");
 		break;
 	case 0x74:
+	case 0x76:
+	case 0x78:
+	case 0x7a:
 		call_function("fan_normal", "");
 		break;
-	case 0x3a:
-	case 0x3c:
-		call_function("temp_low", "");
+	case 0x80 ... 0x8f: /*  0 - 15 */
+	case 0x90 ... 0x9f: /* 16 - 31 */
+	case 0xa0 ... 0xaf: /* 32 - 47 */
+	case 0xb0 ... 0xbf: /* 48 - 63 */
+	case 0xc0 ... 0xc6: /* 64 - 70 */
+		call_function("temp", "%d", buf[0] - 128);
 		break;
-	case 0x3b:
-	case 0x3d:
-		call_function("temp_high", "");
+	case 0x38: /* 71 - 79 */
+		call_function("temp", "%d", 75);
+		break;
+	case 0x39: /* 80 or higher */
+		call_function("temp", "%d", 80);
 		break;
 	default:
-		fprintf(stderr, "(PIC) unknown command from PIC\n");
+		fprintf(stderr, "(PIC 0x%x) unknown command from PIC\n", buf[0]);
 	}
 
 	return -1;
@@ -97,7 +109,7 @@ static void *serial_poll(void *tmp)
 			FD_SET(serial, &rset);
 			continue;
 		}
-		ts209_read_serial_events();
+		ts409_read_serial_events();
 		FD_SET(serial, &rset);
 	}
 
@@ -155,29 +167,7 @@ static void serial_close()
 	close(serial);
 }
 
-static int ts209_powerled(int argc, const char **argv)
-{
-	char code = 0;
-
-	if (argc != 1)
-		return -1;
-
-	if (strcmp(argv[0], "on") == 0)
-		code = 0x4d;
-	else if (strcmp(argv[0], "1hz") == 0)
-		code = 0x4e;
-	else if (strcmp(argv[0], "2hz") == 0)
-		code = 0x4c;
-	else if (strcmp(argv[0], "off") == 0)
-		code = 0x4b;
-	else
-		return -1;
-
-	return serial_write(&code, 1);
-	return 0;
-}
-
-static int ts209_statusled(int argc, const char **argv)
+static int ts409_statusled(int argc, const char **argv)
 {
 	char code = 0;
 
@@ -209,7 +199,7 @@ static int ts209_statusled(int argc, const char **argv)
 	return 0;
 }
 
-static int ts209_buzz(int argc, const char **argv)
+static int ts409_buzz(int argc, const char **argv)
 {
 	char code = 0;
 
@@ -227,7 +217,7 @@ static int ts209_buzz(int argc, const char **argv)
 	return 0;
 }
 
-static int ts209_fanspeed(int argc, const char **argv)
+static int ts409_fanspeed(int argc, const char **argv)
 {
 	char code = 0;
 
@@ -253,7 +243,7 @@ static int ts209_fanspeed(int argc, const char **argv)
 	return 0;
 }
 
-static int ts209_usbled(int argc, const char **argv)
+static int ts409_usbled(int argc, const char **argv)
 {
 	char code = 0;
 
@@ -273,7 +263,7 @@ static int ts209_usbled(int argc, const char **argv)
 	return 0;
 }
 
-int ts209_init(int argc, const char **argv)
+int ts409_init(int argc, const char **argv)
 {
 	int err;
 
@@ -291,39 +281,34 @@ int ts209_init(int argc, const char **argv)
 	                       "Change the status LED, options are:\n"
 	                       "\tred2hz\n\tgreen2hz\n\tgreenon\n\tredon\n"
 	                       "\tgreenred2hz\n\toff\n\tgreen1hz\n\tred1hz\n",
-	                       ts209_statusled);
-	err = register_command("powerled",
-	                       "Change the power LED",
-	                       "Change the power LED, options are:\n"
-	                       "\ton\n\toff\n\t1hz\n\t2hz\n",
-	                       ts209_powerled);
+	                       ts409_statusled);
 	err = register_command("buzzer",
 	                       "Buzz",
 	                       "Buzz, options are:\n"
 	                       "\tshort\n\tlong\n",
-	                       ts209_buzz);
+	                       ts409_buzz);
 	err = register_command("fanspeed",
 	                       "Set the fanspeed",
 	                       "Set the fanspeed, options are:\n"
 	                       "\tstop\n\tsilence\n\tlow\n\tmedium\n"
 	                       "\thigh\n\tfull\n",
-	                       ts209_fanspeed);
+	                       ts409_fanspeed);
 	err = register_command("usbled",
 	                       "Set the usbled",
 	                       "Set the usbled, options are:\n"
 	                       "\ton\n\t8hz\n\toff\n",
-	                       ts209_usbled);
+	                       ts409_usbled);
 
-	return pthread_create(&ts209_thread, NULL, serial_poll, NULL);
+	return pthread_create(&ts409_thread, NULL, serial_poll, NULL);
 }
 
-void ts209_exit(void)
+void ts409_exit(void)
 {
 	serial_close();
 }
 
-struct picmodule ts209_module = {
-	.name           = "ts209",
-	.init           = ts209_init,
-	.exit           = ts209_exit,
+struct picmodule ts409_module = {
+	.name           = "ts409",
+	.init           = ts409_init,
+	.exit           = ts409_exit,
 };

@@ -54,10 +54,12 @@ unsigned int commandcount;
 struct piccommand **commands;
 
 extern struct picmodule ts209_module;
+extern struct picmodule ts409_module;
 extern struct picmodule evdev_module;
 
 struct picmodule *modules[] = {
 	&ts209_module,
+	&ts409_module,
 	&evdev_module,
 	NULL
 };

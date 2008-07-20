@@ -1,6 +1,6 @@
 CFLAGS=-Os -Wall -I /usr/include/lua5.1
 LDFLAGS=-llua5.1 -lpthread
-SOURCES=qcontrol.c ts209.c evdev.c
+SOURCES=qcontrol.c ts209.c ts409.c evdev.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=qcontrol
 
