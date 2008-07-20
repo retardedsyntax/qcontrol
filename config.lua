@@ -36,6 +36,20 @@ function temp_high(  )
 	piccmd("fanspeed", "full")
 end
 
+function temp( temp )
+	print("ts409 temperature:", temp)
+	if temp > 80 then
+		piccmd("fanspeed", "full")
+	else
+		if temp > 70 then
+			piccmd("fanspeed", "high")
+		end
+	else
+		if temp > 55 then
+			piccmd("fanspeed", "medium")
+		end
+	end
+
 function restart_button( time )
 	os.execute("reboot")
 end
