@@ -77,7 +77,7 @@ int ts209_read_serial_events()
 		call_function("temp_high", "");
 		break;
 	default:
-		fprintf(stderr, "(PIC) unknown command from PIC\n");
+		fprintf(stderr, "(PIC 0x%x) unknown command from PIC\n", buf[0]);
 	}
 
 	return -1;
