@@ -18,6 +18,7 @@
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
+#include <setjmp.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -229,15 +230,21 @@ const char *help_command(const char *cmd)
 
 static int pic_lua_setup()
 {
+	int err;
+
 	lua = lua_open();
 	luaL_openlibs(lua);
 
 	lua_register(lua, "register", register_module);
 	lua_register(lua, "piccmd", run_command_lua);
 
-	luaL_dofile(lua, "/etc/qcontrol.conf");
+	err = luaL_dofile(lua, "/etc/qcontrol.conf");
+	if (err != 0) {
+		fprintf(stderr, "%s\n", lua_tostring(lua, -1));
+		lua_pop(lua, 1);
+	}
 
-	return 0;
+	return err;
 }
 
 int write_uint32(uint32_t i, char **buf, int off,  unsigned int *maxlen)
@@ -424,6 +431,7 @@ static int network_listen()
 
 int main(int argc, char *argv[])
 {
+	int err;
 	commandcount = 0;
 
 	if (argc > 1 && (strcmp(argv[1], "--help") == 0
@@ -436,13 +444,16 @@ int main(int argc, char *argv[])
 		return 0;
 	} else if (argc > 1 && strcmp(argv[1], "-d") == 0) {
 		/* Startup in daemon mode */
-		pic_lua_setup(&lua);
+		err = pic_lua_setup(&lua);
+		if (err != 0)
+			return -1;
 		return network_listen();
 	} else if (argc > 1) {
 		/* Send the command to the server */
 		return network_send(argc - 1, argv + 1);
 	} else {
 		printf("%s", usage);
+		return network_send(1, "--help");
 	}
 
 	return -1;
