@@ -285,6 +285,24 @@ static int ts219_usbled(int argc, const char **argv)
 	return 0;
 }
 
+static int ts219_autopower(int argc, const char **argv)
+{
+	char code = 0;
+
+	if (argc != 1)
+		return -1;
+
+	if (strcmp(argv[0], "on") == 0)
+		code = 0x48;
+	else if (strcmp(argv[0], "off") == 0)
+		code = 0x49;
+	else
+		return -1;
+
+	return serial_write(&code, 1);
+	return 0;
+}
+
 int ts219_init(int argc, const char **argv)
 {
 	int err;
@@ -325,6 +343,11 @@ int ts219_init(int argc, const char **argv)
 	                       "Set the usbled, options are:\n"
 	                       "\ton\n\t8hz\n\toff\n",
 	                       ts219_usbled);
+	err = register_command("autopower",
+	                       "Control the automatic power mechanism",
+	                       "Control the automatic power mechanism, options are:\n"
+	                       "\ton\n\toff\n",
+	                       ts219_autopower);
 
 	return pthread_create(&ts219_thread, NULL, serial_poll, NULL);
 }
