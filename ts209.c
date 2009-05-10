@@ -33,17 +33,18 @@ static int serial;
 static struct termios oldtio, newtio;
 static pthread_t ts209_thread;
 
-static int serial_read(char *buf, int len)
+static int serial_read(unsigned char *buf, int len)
 {
 	int err;
 
 	err = read(serial, buf, len);
-	buf[err] = 0;
+	if (err != -1)
+		buf[err] = 0;
 
 	return err;
 }
 
-static int serial_write(char *buf, int len)
+static int serial_write(unsigned char *buf, int len)
 {
 	int err;
 
@@ -54,7 +55,7 @@ static int serial_write(char *buf, int len)
 
 int ts209_read_serial_events()
 {
-	char buf[100];
+	unsigned char buf[100];
 	int err = serial_read(buf, 100);
 	if (err < 0)
 		return err;
@@ -157,7 +158,7 @@ static void serial_close()
 
 static int ts209_powerled(int argc, const char **argv)
 {
-	char code = 0;
+	unsigned char code = 0;
 
 	if (argc != 1)
 		return -1;
@@ -179,7 +180,7 @@ static int ts209_powerled(int argc, const char **argv)
 
 static int ts209_statusled(int argc, const char **argv)
 {
-	char code = 0;
+	unsigned char code = 0;
 
 	if (argc != 1)
 		return -1;
@@ -211,7 +212,7 @@ static int ts209_statusled(int argc, const char **argv)
 
 static int ts209_buzz(int argc, const char **argv)
 {
-	char code = 0;
+	unsigned char code = 0;
 
 	if (argc != 1)
 		return -1;
@@ -229,7 +230,7 @@ static int ts209_buzz(int argc, const char **argv)
 
 static int ts209_fanspeed(int argc, const char **argv)
 {
-	char code = 0;
+	unsigned char code = 0;
 
 	if (argc != 1)
 		return -1;
@@ -255,7 +256,7 @@ static int ts209_fanspeed(int argc, const char **argv)
 
 static int ts209_usbled(int argc, const char **argv)
 {
-	char code = 0;
+	unsigned char code = 0;
 
 	if (argc != 1)
 		return -1;
@@ -275,7 +276,7 @@ static int ts209_usbled(int argc, const char **argv)
 
 static int ts209_autopower(int argc, const char **argv)
 {
-	char code = 0;
+	unsigned char code = 0;
 
 	if (argc != 1)
 		return -1;
