@@ -442,7 +442,7 @@ int main(int argc, char *argv[])
 		/* Send the command to the server */
 		return network_send(argc - 1, argv + 1);
 	} else {
-		printf("Usage\n");
+		printf("%s", usage);
 	}
 
 	return -1;
