@@ -130,7 +130,11 @@ int call_function(const char *fname, const char *fmt, ...)
 	}
 	va_end(s);
 
-	lua_call(lua, i / 2, 0);
+	if (lua_pcall(lua, i / 2, 0, 0) == LUA_ERRRUN) {
+		print_log(LOG_ERR, "Error calling lua function %s: %s",
+		          fname, lua_tostring(lua, -1));
+		return -1;
+	}
 
 	return 0;
 }
