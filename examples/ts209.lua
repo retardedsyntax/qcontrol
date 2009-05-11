@@ -26,7 +26,7 @@ fanfail = 0
 function fan_error(  )
 	fanfail = fanfail + 1
 	if fanfail == 3 then
-		print("ts209: fan error")
+		print_log("ts209: fan error")
 		piccmd("statusled", "red2hz")
 		piccmd("buzzer", "long")
 	else

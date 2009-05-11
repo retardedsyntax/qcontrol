@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <errno.h>
 #include <fcntl.h>
 #include <lua.h>
 #include <lualib.h>
@@ -24,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/signal.h>
+#include <syslog.h>
 #include <termios.h>
 #include <unistd.h>
 #include <linux/input.h>
@@ -64,7 +66,7 @@ int evdev_event()
 	}
 
 	if (!events[i])
-		fprintf(stderr, "evdev: unknown event %d\n", ie.code);
+		print_log(LOG_WARNING, "evdev: Unknown event %d", ie.code);
 
 	return 0;
 }
@@ -84,7 +86,7 @@ int evdev_init(int argc, const char **argv)
 
 	evcount = (argc - 1) / 2;
 	if (evcount < 1 || (argc - 1) % 2 != 0) {
-		fprintf(stderr, "evdev not configured correctly %d %d\n", evcount, evcount %2);
+		print_log(LOG_ERR, "evdev: got an uneven number of arguments");
 		return -1;
 	}
 
@@ -99,8 +101,8 @@ int evdev_init(int argc, const char **argv)
 
 	event = open(argv[0], 0);
 	if (event < 0) {
-		fprintf(stderr, "Error opening %s: ", argv[0]);
-		perror(NULL);
+		print_log(LOG_ERR, "evdev: Error opening %s: %s",
+		       argv[0], strerror(errno));
 		for (i = 0; events[i]; ++i)
 			free(events[i]);
 		free(events);

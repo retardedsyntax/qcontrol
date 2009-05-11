@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <errno.h>
 #include <fcntl.h>
 #include <lua.h>
 #include <lualib.h>
@@ -24,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <termios.h>
 #include <unistd.h>
 #include <linux/input.h>
@@ -90,7 +92,8 @@ int ts219_read_serial_events()
 		call_function("temp", "%d", 80);
 		break;
 	default:
-		fprintf(stderr, "(PIC 0x%x) unknown command from PIC\n", buf[0]);
+		print_log(LOG_ERR, "(PIC 0x%x) unknown command from PIC\n",
+                          buf[0]);
 	}
 
 	return -1;
@@ -127,17 +130,16 @@ static int set_nonblock(int fd)
 
 static int serial_open(char *device)
 {
-	char buf[100];
 	int err;
 
 	if ((serial = open(device , O_RDWR)) < 0) {
-		sprintf(buf, "Failed to open %s", device);
-		perror(buf);
+		print_log(LOG_ERR, "Failed to open %s: %s", device,
+		          strerror(errno));
 		return -1;
 	}
 	err = set_nonblock(serial);
 	if (err < 0) {
-		perror("Error setting nonblock");
+		print_log(LOG_ERR, "Error setting nonblock");
 		return -1;
 	}
 
@@ -154,8 +156,8 @@ static int serial_open(char *device)
 
 	err = tcsetattr(serial, TCSANOW, &newtio);
 	if (err < 0) {
-		sprintf(buf, "Failed to set attributes for %s", device);
-		perror(buf);
+		print_log(LOG_ERR, "Failed to set attributes for %s: %s",
+		          device, strerror(errno));
 		return -1;
 	}
 
@@ -309,7 +311,8 @@ int ts219_init(int argc, const char **argv)
 	int err;
 
 	if (argc > 0) {
-		printf("%s: module does not take any arguments\n", __func__);
+		print_log(LOG_ERR, "%s: module does not take any arguments\n",
+		          __func__);
 		return -1;
 	}
 

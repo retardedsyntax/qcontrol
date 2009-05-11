@@ -15,16 +15,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <errno.h>
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
 #include <setjmp.h>
+#include <stdarg.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <sys/un.h>
 
 #include "picmodule.h"
@@ -41,10 +47,12 @@ struct piccommand {
 	int (*call)(int argc, const char **argv);
 };
 
+bool g_use_syslog = false;
 char *version = "qcontrol 0.4.1\n";
 char *usage = "Usage: qcontrol [OPTION...] [command] [args...]\n"
               "PIC Controller\n\n"
-              "  -d, --daemon                Run as a daemon\n"
+              "  -d, --daemon               Run the server as a daemon\n"
+              "  -f, --foreground           Run the server in the foreground\n"
               "  -?, --help                 Give this help list\n"
               "  -V, --version              Print program version\n\n"
               "Mandatory or optional arguments to long options are also "
@@ -68,6 +76,32 @@ struct picmodule *modules[] = {
 };
 
 /**
+ * Print an error message, either to the console or syslog depending on the
+ * value of g_use_syslog
+ */
+int print_log(int priority, const char *format, ...)
+{
+	int err = 0;
+	va_list ap;
+
+	va_start(ap, format);
+	if (g_use_syslog == true) {
+		vsyslog(priority, format, ap);
+	} else {
+		if (priority == LOG_ERR) {
+			err = vfprintf(stderr, format, ap);
+			printf("\n");
+		} else {
+			err = vprintf(format, ap);
+			printf("\n");
+		}
+	}
+
+	va_end(ap);
+	return err;
+}
+
+/**
  * Calls a function in the lua config file
  */
 int call_function(const char *fname, const char *fmt, ...)
@@ -89,7 +123,7 @@ int call_function(const char *fname, const char *fmt, ...)
 			lua_pushstring(lua, va_arg(s, char*));
 			break;
 		default:
-			fprintf(stderr, "Unrecognised format\n");
+			print_log(LOG_WARNING, "Unrecognised format");
 			return -1;
 		}
 		++i;
@@ -132,7 +166,7 @@ int register_module()
 
 	err = get_args(&argc, &argv);
 	if (err < 0)
-		return_error("Error getting arguments");
+		print_log(LOG_ERR, "register() - Error getting arguments");
 
 	for (i = 0; modules[i]; ++i) {
 		if (strcmp(argv[0], modules[i]->name) != 0)
@@ -141,7 +175,7 @@ int register_module()
 		break;
 	}
 	if (err < 0)
-		return_error("Error loading module");
+		return_error("register() - Error loading module");
 	return err;
 }
 
@@ -211,10 +245,28 @@ int run_command_lua()
 	const char **argv;
 
 	err = get_args(&argc, &argv);
-	if (err < 0)
-		return_error("Error getting arguments");
+	if (err < 0) {
+		return_error("piccmd() - Error getting arguments");
+		return -1;
+	}
 
 	return run_command(argv[0], argc-1, argv+1);
+}
+
+int script_print()
+{
+	int argc, err;
+	const char **argv;
+
+	err = get_args(&argc, &argv);
+	if (err < 0 || argc != 1) {
+		return_error("logprint() - Error getting arguments");
+		return -1;
+	}
+
+	print_log(LOG_NOTICE, "%s", argv[0]);
+
+	return 0;
 }
 
 const char *help_command(const char *cmd)
@@ -237,10 +289,11 @@ static int pic_lua_setup()
 
 	lua_register(lua, "register", register_module);
 	lua_register(lua, "piccmd", run_command_lua);
+	lua_register(lua, "logprint", script_print);
 
 	err = luaL_dofile(lua, "/etc/qcontrol.conf");
 	if (err != 0) {
-		fprintf(stderr, "%s\n", lua_tostring(lua, -1));
+		print_log(LOG_ERR, "%s", lua_tostring(lua, -1));
 		lua_pop(lua, 1);
 	}
 
@@ -301,7 +354,7 @@ int network_send(int argc, char **argv)
 
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sock < 0) {
-		perror("Error opening socket");
+		print_log(LOG_ERR, "Error opening socket: %s", strerror(errno));
 		return -1;
 	}
 
@@ -310,7 +363,8 @@ int network_send(int argc, char **argv)
 	err = connect(sock, (struct sockaddr*)&remote,
 					sizeof(struct sockaddr_un));
 	if (err < 0) {
-		perror("Error connecting to socket");
+		print_log(LOG_ERR, "Error connecting to socket: %s",
+		          strerror(errno));
 		return -1;
 	}
 
@@ -323,7 +377,7 @@ int network_send(int argc, char **argv)
 	send(sock, buf, off, 0);
 	rlen = read(sock, retbuf, MAX_NET_BUF);
 	if (rlen < 0) {
-		perror("Error during read");
+		print_log(LOG_ERR, "Error during read: %s", strerror(errno));
 		return -1;
 	}
 
@@ -331,9 +385,12 @@ int network_send(int argc, char **argv)
 	off = read_uint32((uint32_t*)&err, retbuf, off);
 	if (err < 0) {
 		off = read_string(&errstr, retbuf, off);
-		printf("%s\n", errstr);
+		print_log(LOG_ERR, "%s", errstr);
 	} else if (err == 0 && rlen > sizeof(int)) {
-		printf("\nAvailable commands are:\n%s\n", retbuf + sizeof(int));
+		print_log(LOG_ERR, "\nAvailable commands are:\n%s",
+		          retbuf + sizeof(int));
+		err = 1;
+	} else {
 		err = 0;
 	}
 
@@ -353,7 +410,8 @@ static int network_listen()
 
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sock < 0) {
-		perror("Error creating socket:");
+		print_log(LOG_ERR, "Error creating socket: %s",
+		          strerror(errno));
 		return -1;
 	}
 
@@ -361,13 +419,15 @@ static int network_listen()
 	strcpy(name.sun_path, PIC_SOCKET);
 	err = bind(sock, (struct sockaddr*) &name, sizeof(struct sockaddr_un));
 	if (err != 0) {
-		perror("Error binding to socket");
+		print_log(LOG_ERR, "Error binding to socket: %s",
+		          strerror(errno));
 		return -1;
 	}
 
 	err = listen(sock, 10);
 	if (err < 0) {
-		perror("Error listening on socket");
+		print_log(LOG_ERR, "Error listening on socket: %s",
+		          strerror(errno));
 		return -1;
 	}
 
@@ -375,12 +435,14 @@ static int network_listen()
 	for (;;) {
 		con = accept(sock, (struct sockaddr*)&remote, &remotelen);
 		if (con < 0) {
-			perror("Error accepting connection");
+			print_log(LOG_ERR, "Error accepting connection: %s",
+			          strerror(errno));
 			break;
 		}
 		err = read(con, buf, MAX_NET_BUF);
 		if (err < 0) {
-			perror("Error during read");
+			print_log(LOG_ERR, "Error during read: %s",
+			          strerror(errno));
 			break;
 		}
 
@@ -388,7 +450,7 @@ static int network_listen()
 		off = read_uint32((uint32_t*)&argc, buf, off);
 		argv = malloc(argc * sizeof(char*));
 		if (!argv) {
-			perror("read failed");
+			print_log(LOG_ERR, "read failed: %s", strerror(errno));
 			return -1;
 		}
 		for (i = 0; i < argc; ++i)
@@ -429,9 +491,46 @@ static int network_listen()
 	return 0;
 }
 
-int main(int argc, char *argv[])
+int start_daemon(bool daemon_mode)
 {
 	int err;
+	pid_t pid, sid;
+
+	if (daemon_mode == true) {
+		g_use_syslog = true;
+
+		pid = fork();
+		if (pid < 0)
+			return -1;
+		else if (pid > 0)
+			return 0;
+
+		umask(0);
+		sid = setsid();
+		if (sid < 0)
+			return -1;
+		if ((chdir("/")) < 0)
+			return -1;
+		close(STDIN_FILENO);
+		close(STDOUT_FILENO);
+		close(STDERR_FILENO);
+		openlog("qcontrol", LOG_PID, LOG_DAEMON);
+	}
+
+	err = pic_lua_setup(&lua);
+	if (err != 0)
+		return -1;
+	print_log(LOG_INFO, "Read config file");
+	err = network_listen();
+
+	if (daemon_mode == true)
+		closelog();
+	return err;
+}
+
+int main(int argc, char *argv[])
+{
+	char *help = "--help";
 	commandcount = 0;
 
 	if (argc > 1 && (strcmp(argv[1], "--help") == 0
@@ -442,18 +541,18 @@ int main(int argc, char *argv[])
 	                     || strcmp(argv[1], "--version") == 0)) {
 		printf("%s", version);
 		return 0;
-	} else if (argc > 1 && strcmp(argv[1], "-d") == 0) {
-		/* Startup in daemon mode */
-		err = pic_lua_setup(&lua);
-		if (err != 0)
-			return -1;
-		return network_listen();
+	} else if (argc > 1 && (strcmp(argv[1], "-d") == 0
+                                || strcmp(argv[1], "--daemon") == 0)) {
+		return start_daemon(true);
+	} else if (argc > 1 && (strcmp(argv[1], "-f") == 0
+                                || strcmp(argv[1], "--foreground") == 0)) {
+		return start_daemon(false);
 	} else if (argc > 1) {
 		/* Send the command to the server */
 		return network_send(argc - 1, argv + 1);
 	} else {
 		printf("%s", usage);
-		return network_send(1, "--help");
+		return network_send(1, &help);
 	}
 
 	return -1;

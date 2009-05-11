@@ -24,6 +24,7 @@ struct picmodule {
 	void (*exit)(void);
 };
 
+int print_log(int priority, const char *format, ...);
 int get_args(int *argc, const char ***argv);
 int register_command(const char *cmd, const char *shorthelp, const char *help,
                      int (*call)(int argc, const char **argv));
