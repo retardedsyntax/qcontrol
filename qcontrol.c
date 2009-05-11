@@ -419,9 +419,23 @@ static int network_listen()
 	strcpy(name.sun_path, PIC_SOCKET);
 	err = bind(sock, (struct sockaddr*) &name, sizeof(struct sockaddr_un));
 	if (err != 0) {
-		print_log(LOG_ERR, "Error binding to socket: %s",
-		          strerror(errno));
-		return -1;
+		err = connect(sock, (struct sockaddr*)&name,
+		              sizeof(struct sockaddr_un));
+		if (err < 0) {
+			err = unlink(PIC_SOCKET);
+			if (err != 0)
+				print_log(LOG_ERR, "Error deleting socket: %s",
+				          strerror(errno));
+			err = bind(sock, (struct sockaddr*) &name,
+			           sizeof(struct sockaddr_un));
+			if (err != 0)
+				print_log(LOG_ERR, "Error creating socket: %s",
+				          strerror(errno));
+		} else {
+			print_log(LOG_ERR, "server already running");
+			close(sock);
+			return -1;
+		}
 	}
 
 	err = listen(sock, 10);
@@ -444,6 +458,11 @@ static int network_listen()
 			print_log(LOG_ERR, "Error during read: %s",
 			          strerror(errno));
 			break;
+		} else if (err == 0) {
+			/* read nothing, probably just somebody checking we're
+			   alive */
+			close(con);
+			continue;
 		}
 
 		/* Process the arguments */
@@ -520,7 +539,6 @@ int start_daemon(bool daemon_mode)
 	err = pic_lua_setup(&lua);
 	if (err != 0)
 		return -1;
-	print_log(LOG_INFO, "Read config file");
 	err = network_listen();
 
 	if (daemon_mode == true)
