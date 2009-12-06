@@ -1,17 +1,18 @@
-CFLAGS=-Os -Wall -I /usr/include/lua5.1
-LDFLAGS=-llua5.1 -lpthread
+CFLAGS=-Os -Wall
+CPPFLAGS=-I /usr/include/lua5.1
+LDFLAGS=
+LIBS=-llua5.1 -lpthread
 SOURCES=qcontrol.c ts209.c ts219.c ts409.c ts41x.c evdev.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=qcontrol
 
 all:	$(SOURCES) $(EXECUTABLE)
-	
-$(EXECUTABLE): $(OBJECTS) 
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+
+$(EXECUTABLE): $(OBJECTS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
 
 .cpp.o:
-	$(CC) $(CFLAGS) $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 clean:
 	rm -f $(OBJECTS) $(EXECUTABLE)
-	
