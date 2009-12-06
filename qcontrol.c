@@ -351,7 +351,7 @@ static int read_string(char **str, char *buf, int off)
 	return off+len;
 }
 
-static int network_send(int argc, char **argv)
+static int network_send(int argc, const char **argv)
 {
 	int sock, err, i, off=0, rlen;
 	struct sockaddr_un remote;
@@ -552,9 +552,9 @@ int start_daemon(bool daemon_mode)
 	return err;
 }
 
-int main(int argc, char *argv[])
+int main(int argc, const char *argv[])
 {
-	char *help = "--help";
+	const char *help = "--help";
 	commandcount = 0;
 
 	if (argc > 1 && (strcmp(argv[1], "--help") == 0
@@ -571,6 +571,10 @@ int main(int argc, char *argv[])
 	} else if (argc > 1 && (strcmp(argv[1], "-f") == 0
                                 || strcmp(argv[1], "--foreground") == 0)) {
 		return start_daemon(false);
+	} else if (argc > 2 && strcmp(argv[1], "--direct") == 0) {
+		/* Execute a single command and terminate */
+		pic_lua_setup(&lua);
+		return run_command(argv[2], argc - 3, argv + 3);
 	} else if (argc > 1) {
 		/* Send the command to the server */
 		return network_send(argc - 1, argv + 1);
