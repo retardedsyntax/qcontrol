@@ -58,6 +58,7 @@ char *usage = "Usage: qcontrol [OPTION...] [command] [args...]\n"
               "Mandatory or optional arguments to long options are also "
               "mandatory or optional\nfor any corresponding short options.\n\n"
               "Report bugs to <byron.bbradley@gmail.com>.\n";
+static const char *configfilename = "/etc/qcontrol.conf";
 static lua_State *lua;
 unsigned int commandcount;
 struct piccommand **commands;
@@ -297,7 +298,7 @@ static int pic_lua_setup(lua_State **L)
 	lua_register(lua, "piccmd", run_command_lua);
 	lua_register(lua, "logprint", script_print);
 
-	err = luaL_dofile(lua, "/etc/qcontrol.conf");
+	err = luaL_dofile(lua, configfilename);
 	if (err != 0) {
 		print_log(LOG_ERR, "%s", lua_tostring(lua, -1));
 		lua_pop(lua, 1);
@@ -556,6 +557,12 @@ int main(int argc, const char *argv[])
 {
 	const char *help = "--help";
 	commandcount = 0;
+
+	if (argc > 1 && (strcmp(argv[1], "-c") == 0)) {
+		configfilename = argv[2];
+		argc -= 2;
+		argv += 2;
+	}
 
 	if (argc > 1 && (strcmp(argv[1], "--help") == 0
 	              || strcmp(argv[1], "-?") == 0)) {
