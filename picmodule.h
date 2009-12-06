@@ -30,4 +30,10 @@ int register_command(const char *cmd, const char *shorthelp, const char *help,
                      int (*call)(int argc, const char **argv));
 int call_function(const char *fname, const char *fmt, ...);
 
+#ifdef __GNUC__
+#define UNUSED __attribute__ ((unused))
+#else
+#define UNUSE
+#endif
+
 #endif /* Not _PICMODULE_H_ */

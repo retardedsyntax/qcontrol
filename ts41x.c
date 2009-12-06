@@ -53,7 +53,7 @@ static int serial_write(char *buf, int len)
 	return err;
 }
 
-int ts41x_read_serial_events()
+static int ts41x_read_serial_events(void)
 {
 	char buf[100];
 	int err = serial_read(buf, 100);
@@ -95,7 +95,7 @@ int ts41x_read_serial_events()
 	return -1;
 }
 
-static void *serial_poll(void *tmp)
+static void *serial_poll(void *tmp UNUSED)
 {
 	int err;
 	fd_set rset;
@@ -161,7 +161,7 @@ static int serial_open(char *device)
 	return 0;
 }
 
-static void serial_close()
+static void serial_close(void)
 {
 	tcsetattr(serial, TCSANOW, &oldtio);
 	close(serial);
@@ -303,7 +303,7 @@ static int ts41x_autopower(int argc, const char **argv)
 	return 0;
 }
 
-int ts41x_init(int argc, const char **argv)
+static int ts41x_init(int argc, const char **argv UNUSED)
 {
 	int err;
 
@@ -352,7 +352,7 @@ int ts41x_init(int argc, const char **argv)
 	return pthread_create(&ts41x_thread, NULL, serial_poll, NULL);
 }
 
-void ts41x_exit(void)
+static void ts41x_exit(void)
 {
 	serial_close();
 }

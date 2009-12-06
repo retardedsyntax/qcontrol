@@ -144,7 +144,7 @@ int call_function(const char *fname, const char *fmt, ...)
 /**
  * Return an error to lua
  */
-void return_error(const char *error)
+static void return_error(const char *error)
 {
 	lua_pushstring(lua, error);
 	lua_error(lua);
@@ -165,7 +165,7 @@ int get_args(int *argc, const char ***argv)
 	return 0;
 }
 
-int register_module()
+static int register_module(lua_State *L UNUSED)
 {
 	int i, argc, err;
 	const char **argv;
@@ -210,9 +210,9 @@ int register_command(const char *cmd, const char *shorthelp, const char *help,
 	return 0;
 }
 
-void shorthelp_commands(char **buf, int *len)
+static void shorthelp_commands(char **buf, int *len)
 {
-	int i, off=0;
+	unsigned int i, off=0;
 
 	*len = 0;
 	for (i = 0; i < commandcount; ++i)
@@ -234,9 +234,9 @@ void shorthelp_commands(char **buf, int *len)
 	}
 }
 
-int run_command(const char *cmd, int argc, const char **argv)
+static int run_command(const char *cmd, int argc, const char **argv)
 {
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < commandcount; ++i)
 		if (strcmp(cmd, commands[i]->name) == 0)
@@ -245,7 +245,7 @@ int run_command(const char *cmd, int argc, const char **argv)
 	return -1;
 }
 
-int run_command_lua()
+static int run_command_lua(lua_State *L UNUSED)
 {
 	int argc, err;
 	const char **argv;
@@ -275,9 +275,9 @@ int script_print()
 	return 0;
 }
 
-const char *help_command(const char *cmd)
+static const char *help_command(const char *cmd)
 {
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < commandcount; ++i)
 		if (strcmp(cmd, commands[i]->name) == 0)
@@ -286,7 +286,7 @@ const char *help_command(const char *cmd)
 	return "Command not found\n";
 }
 
-static int pic_lua_setup()
+static int pic_lua_setup(lua_State **L)
 {
 	int err;
 
@@ -306,11 +306,11 @@ static int pic_lua_setup()
 	return err;
 }
 
-int write_uint32(uint32_t i, char **buf, int off,  unsigned int *maxlen)
+static int write_uint32(uint32_t i, char **buf, int off,  unsigned int *maxlen)
 {
-	int ilen = sizeof(uint32_t);
+	unsigned int ilen = sizeof(uint32_t);
 
-	if (off + ilen > *maxlen) {
+	if ((unsigned int)off + ilen > *maxlen) {
 		*maxlen += ilen + MALLOC_SIZE;
 		*buf = realloc(*buf, *maxlen);
 		if (!buf)
@@ -320,13 +320,13 @@ int write_uint32(uint32_t i, char **buf, int off,  unsigned int *maxlen)
 	return off + ilen;
 }
 
-int read_uint32(uint32_t *i, char *buf, int off)
+static int read_uint32(uint32_t *i, char *buf, int off)
 {
 	memcpy(i, buf+off, sizeof(uint32_t));
 	return off + sizeof(uint32_t);
 }
 
-int write_string(const char *str, char **buf, int off, unsigned int *maxlen)
+static int write_string(const char *str, char **buf, int off, unsigned int *maxlen)
 {
 	int slen = strlen(str) + 1;
 
@@ -341,7 +341,7 @@ int write_string(const char *str, char **buf, int off, unsigned int *maxlen)
 	return off+slen;
 }
 
-int read_string(char **str, char *buf, int off)
+static int read_string(char **str, char *buf, int off)
 {
 	uint32_t len;
 
@@ -351,7 +351,7 @@ int read_string(char **str, char *buf, int off)
 	return off+len;
 }
 
-int network_send(int argc, char **argv)
+static int network_send(int argc, char **argv)
 {
 	int sock, err, i, off=0, rlen;
 	struct sockaddr_un remote;
@@ -392,7 +392,7 @@ int network_send(int argc, char **argv)
 	if (err < 0) {
 		off = read_string(&errstr, retbuf, off);
 		print_log(LOG_ERR, "%s", errstr);
-	} else if (err == 0 && rlen > sizeof(int)) {
+	} else if (err == 0 && rlen > (int)sizeof(int)) {
 		print_log(LOG_ERR, "\nAvailable commands are:\n%s",
 		          retbuf + sizeof(int));
 		err = 1;
@@ -405,7 +405,7 @@ int network_send(int argc, char **argv)
 	return err;
 }
 
-static int network_listen()
+static int network_listen(void)
 {
 	int sock, err, con, argc, off=0, i;
 	char **argv;

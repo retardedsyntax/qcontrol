@@ -56,7 +56,7 @@ static int serial_write(unsigned char *buf, int len)
 	return err;
 }
 
-int ts209_read_serial_events()
+static int ts209_read_serial_events(void)
 {
 	unsigned char buf[100];
 	int err = serial_read(buf, 100);
@@ -88,7 +88,7 @@ int ts209_read_serial_events()
 	return -1;
 }
 
-static void *serial_poll(void *tmp)
+static void *serial_poll(void *tmp UNUSED)
 {
 	int err;
 	fd_set rset;
@@ -154,7 +154,7 @@ static int serial_open(char *device)
 	return 0;
 }
 
-static void serial_close()
+static void serial_close(void)
 {
 	tcsetattr(serial, TCSANOW, &oldtio);
 	close(serial);
@@ -296,7 +296,7 @@ static int ts209_autopower(int argc, const char **argv)
 	return 0;
 }
 
-int ts209_init(int argc, const char **argv)
+static int ts209_init(int argc, const char **argv UNUSED)
 {
 	int err;
 
@@ -345,7 +345,7 @@ int ts209_init(int argc, const char **argv)
 	return pthread_create(&ts209_thread, NULL, serial_poll, NULL);
 }
 
-void ts209_exit(void)
+static void ts209_exit(void)
 {
 	serial_close();
 }

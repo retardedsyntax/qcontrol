@@ -41,7 +41,7 @@ static struct event_listen **events;
 static pthread_t evdev_thread;
 static int event;
 
-int evdev_event()
+static int evdev_event(void)
 {
 	struct input_event ie;
 	char buf[100];
@@ -71,7 +71,7 @@ int evdev_event()
 	return 0;
 }
 
-static void *evdev_poll(void *tmp)
+static void *evdev_poll(void *tmp UNUSED)
 {
 	for (;;)
 		evdev_event();
@@ -79,7 +79,7 @@ static void *evdev_poll(void *tmp)
 	return NULL;
 }
 
-int evdev_init(int argc, const char **argv)
+static int evdev_init(int argc, const char **argv)
 {
 	int i, evcount;
 	struct event_listen *el;
@@ -112,7 +112,7 @@ int evdev_init(int argc, const char **argv)
 	return pthread_create(&evdev_thread, NULL, evdev_poll, NULL);
 }
 
-void evdev_exit()
+static void evdev_exit(void)
 {
 	int i;
 
