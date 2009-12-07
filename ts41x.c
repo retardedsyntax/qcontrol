@@ -36,12 +36,22 @@ static int serial;
 static struct termios oldtio, newtio;
 static pthread_t ts41x_thread;
 
-static int serial_read(char *buf, int len)
+static int serial_read(unsigned char *buf, int len)
 {
 	int err;
+	static int error_count = 0;
 
 	err = read(serial, buf, len);
-	buf[err] = 0;
+	if (err != -1) {
+		buf[err] = 0;
+		error_count = 0;
+	} else if (errno == EAGAIN) {
+		error_count++;
+		if (error_count == 5)
+			print_log(LOG_WARNING,
+"Contradicting information about data available to be read from /dev/ttyS1.\n"
+"Please make sure nothing else is reading things there.");
+	}
 
 	return err;
 }
@@ -57,7 +67,7 @@ static int serial_write(char *buf, int len)
 
 static int ts41x_read_serial_events(void)
 {
-	char buf[100];
+	unsigned char buf[100];
 	int err = serial_read(buf, 100);
 	if (err < 0)
 		return err;

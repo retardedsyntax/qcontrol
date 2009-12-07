@@ -39,10 +39,19 @@ static pthread_t ts409_thread;
 static int serial_read(unsigned char *buf, int len)
 {
 	int err;
+	static int error_count = 0;
 
 	err = read(serial, buf, len);
-	if (err != -1)
+	if (err != -1) {
 		buf[err] = 0;
+		error_count = 0;
+	} else if (errno == EAGAIN) {
+		error_count++;
+		if (error_count == 5)
+			print_log(LOG_WARNING,
+"Contradicting information about data available to be read from /dev/ttyS1.\n"
+"Please make sure nothing else is reading things there.");
+	}
 
 	return err;
 }
