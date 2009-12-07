@@ -5,7 +5,7 @@
 
 -- Requires CONFIG_KEYBOARD_GPIO enabled in the kernel and
 -- the kernel module gpio_keys to be loaded.
-register("evdev", "/dev/input/by-path/platform-gpio-keys-event-",
+register("evdev", "/dev/input/by-path/platform-gpio-keys-event",
 	116, "power_button",
 	408, "restart_button")
 

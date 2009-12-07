@@ -5,7 +5,7 @@
 
 register("ts209")
 
-register("evdev", "/dev/input/event0",
+register("evdev", "/dev/input/by-path/platform-gpio-keys-event",
 	408, "restart_button",
 	133, "media_button")
 
