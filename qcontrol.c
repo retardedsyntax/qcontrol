@@ -262,7 +262,7 @@ static int run_command_lua(lua_State *L UNUSED)
 	return run_command(argv[0], argc-1, argv+1);
 }
 
-int script_print()
+static int script_print(lua_State *L UNUSED)
 {
 	int argc, err;
 	const char **argv;
@@ -289,7 +289,7 @@ static const char *help_command(const char *cmd)
 	return "Command not found\n";
 }
 
-static int pic_lua_setup(lua_State **L)
+static int pic_lua_setup(lua_State **L UNUSED)
 {
 	int err;
 
@@ -519,7 +519,7 @@ static int network_listen(void)
 	return 0;
 }
 
-int start_daemon(bool daemon_mode)
+static int start_daemon(bool daemon_mode)
 {
 	int err;
 	pid_t pid, sid;
