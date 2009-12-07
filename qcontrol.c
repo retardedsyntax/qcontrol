@@ -67,6 +67,7 @@ extern struct picmodule ts209_module;
 extern struct picmodule ts219_module;
 extern struct picmodule ts409_module;
 extern struct picmodule ts41x_module;
+extern struct picmodule a125_module;
 extern struct picmodule evdev_module;
 
 struct picmodule *modules[] = {
@@ -74,6 +75,7 @@ struct picmodule *modules[] = {
 	&ts219_module,
 	&ts409_module,
 	&ts41x_module,
+	&a125_module,
 	&evdev_module,
 	NULL
 };
