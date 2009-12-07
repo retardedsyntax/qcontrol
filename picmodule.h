@@ -24,7 +24,11 @@ struct picmodule {
 	void (*exit)(void);
 };
 
-int print_log(int priority, const char *format, ...);
+int print_log(int priority, const char *format, ...)
+#ifdef __GNUC__
+__attribute__ ((format (printf, 2, 3)))
+#endif
+;
 int get_args(int *argc, const char ***argv);
 int register_command(const char *cmd, const char *shorthelp, const char *help,
                      int (*call)(int argc, const char **argv));
