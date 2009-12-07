@@ -22,10 +22,12 @@
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
+#include <poll.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <termios.h>
 #include <unistd.h>
 #include <linux/input.h>
@@ -35,10 +37,13 @@
 static int serial;
 static struct termios oldtio, newtio;
 static pthread_t a125_thread;
+static int a125_detected = 0;
+static unsigned int button_state = 0;
 
 static int serial_read(char *buf, int len)
 {
 	int err, got = 0;
+	static int empty_count = 0;
 
 	while (len > 0) {
 		errno = 0;
@@ -50,12 +55,37 @@ static int serial_read(char *buf, int len)
 			buf[err] = 0;
 			buf += err;
 			len -= err;
+			empty_count = 0;
+		} else if (errno == EAGAIN) {
+			struct pollfd p = {
+				.fd = serial,
+				.events = POLLIN,
+				.revents = 0
+			};
+
+			empty_count++;
+			if (empty_count == 5)
+				print_log(LOG_WARNING,
+"Contradicting information about data available to be read from A125 LCD.\n"
+"Please make sure nothing else is reading things there.");
+			/* as we are doing non-blocking read,
+			  wait till something is there.
+			  (If we did not care to detect something eating our
+			  input, we could just do blocking read, though) */
+			do {
+				err = poll(&p, 1, -1);
+			} while (err < 0 && errno == EAGAIN);
+			continue;
 		} else {
-			perror("Error reading from A125:");
+			print_log(LOG_ERR, "Error reading from A125: %s",
+				strerror(errno));
 			return err;
 		}
-		if (err == 0)
-			fprintf(stderr, "EOF from A125???\n");
+		if (err == 0) {
+			print_log(LOG_ERR, "EOF from A125????");
+			a125_detected = -2;
+			return -1;
+		}
 	}
 	return got;
 }
@@ -72,11 +102,21 @@ static int serial_write(char *buf, int len)
 static int a125_read_serial_events(void)
 {
 	char buf[101];
+	unsigned int state;
 	int err = serial_read(buf, 1);
 	if (err <= 0)
 		return err;
 	if (buf[0] != 0x53) {
-		fprintf(stderr, "Unknown command 0x%x from A125! stream out of sync\n", buf[0]);
+		if (a125_detected == 0) {
+			print_log(LOG_ERR,
+"Unknown command 0x%x from A125!\n"
+"Disabling reading to avoid disrupting another device!\n"
+"LCD buttons will not work!\n", buf[0]);
+			a125_detected = -1;
+			return -1;
+		}
+		print_log(LOG_ERR,
+"Unknown command 0x%x from A125! stream out of sync\n", buf[0]);
 		return -1;
 	}
 	err = serial_read(buf, 1);
@@ -87,32 +127,43 @@ static int a125_read_serial_events(void)
 		err = serial_read(buf, 2);
 		if (err < 0)
 			return -1;
-		fprintf(stderr, "A125 ID is %04x\n", buf[0]*256+buf[1]);
+		print_log(LOG_DEBUG, "A125 ID is %04x\n", buf[0]*256+buf[1]);
 		break;
 	case 0x05:
 		err = serial_read(buf, 2);
 		if (err < 0)
 			return -1;
-		/* TODO: make them available to LUA */
-		fprintf(stderr, "Button State now %x %x\n", buf[0], buf[1]);
+		state = buf[0]*256+buf[1];
+		if (a125_detected == 0) {
+			a125_detected = 1;
+		} else {
+			unsigned int down, up;
+			/* newly pressed buttons */
+			down = state & ~button_state;
+			/* newly released buttons */
+			up = button_state & ~state;
+
+			call_function("lcd_button", "%d%d%d", state, down, up);
+		}
+		button_state = state;
 		break;
 	case 0x08:
 		err = serial_read(buf, 2);
 		if (err < 0)
 			return -1;
-		fprintf(stderr, "A125 Protocol version is %04x\n", buf[0]*256+buf[1]);
+		print_log(LOG_DEBUG, "A125 Protocol version is %04x\n", buf[0]*256+buf[1]);
 		break;
 	case 0xAA:
-		fprintf(stderr, "A125 Reset OK\n");
+		print_log(LOG_DEBUG, "A125 Reset OK\n");
 		break;
 	case 0xFB:
 		err = serial_read(buf, 1);
 		if (err < 0)
 			return -1;
-		fprintf(stderr, "A125 NACKs command %x\n", buf[0]);
+		print_log(LOG_NOTICE, "A125 NACKs command %x\n", buf[0]);
 		break;
 	default:
-		fprintf(stderr, "(0x%x) unknown command from A125\n", buf[0]);
+		print_log(LOG_NOTICE, "Unknown message 0x%02x from A125!", buf[0]);
 	}
 
 	return -1;
@@ -133,20 +184,37 @@ static void *serial_poll(void *tmp UNUSED)
 			continue;
 		}
 		a125_read_serial_events();
+		if (a125_detected < 0)
+			break;
 		FD_SET(serial, &rset);
 	}
 
 	return NULL;
 }
 
+static int set_nonblock(int fd)
+{
+	int flags = fcntl(fd, F_GETFL, 0);
+	if (flags < 0)
+		flags = 0;
+	return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+}
+
 static int serial_open(const char *device)
 {
-	char buf[100];
+	char buf[2] = { 0x4D, 0x06 };
 	int err;
 
-	if ((serial = open(device , O_RDWR)) < 0) {
-		snprintf(buf, 100, "Failed to open %s", device);
-		perror(buf);
+	serial = open(device , O_RDWR);
+	if (serial < 0) {
+		print_log(LOG_ERR, "a125: Error opening '%s': %s",
+			device, strerror(errno));
+		return -1;
+	}
+	err = set_nonblock(serial);
+	if (err < 0) {
+		print_log(LOG_ERR, "a125: Error setting nonblock: %s",
+		          strerror(errno));
 		return -1;
 	}
 	tcgetattr(serial, &oldtio);
@@ -160,13 +228,22 @@ static int serial_open(const char *device)
 	cfsetospeed(&newtio, B1200);
 	cfsetispeed(&newtio, B1200);
 
-	err = tcsetattr(serial, TCSANOW, &newtio);
+	err = tcsetattr(serial, TCSAFLUSH, &newtio);
 	if (err < 0) {
-		snprintf(buf, 100, "Failed to set attributes for %s", device);
-		perror(buf);
+		print_log(LOG_ERR, "Failed to set attributes for %s: %s",
+				device, strerror(errno));
 		return -1;
 	}
-
+	/* tell LCD to get the current button state.
+	   This also tests if there is a LCD, to avoid fighting with a serial
+	   console. */
+	a125_detected = 0;
+	err = serial_write(buf, 2);
+	if (err < 0) {
+		print_log(LOG_ERR, "Error sending commands to A125 LCD at %s: %s",
+				device, strerror(errno));
+		return -1;
+	}
 	return 0;
 }
 
@@ -212,6 +289,7 @@ static int a125_line(int id, const char *line)
 	return 0;
 }
 
+
 static int a125_line0(int argc, const char **argv)
 {
 	if (argc < 0 || argc > 1)
@@ -228,7 +306,7 @@ static int a125_line1(int argc, const char **argv)
 	return a125_line(1, (argc > 0) ? argv[0] : "");
 }
 
-static int a125_reset(int argc, const char **argv)
+static int a125_reset(int argc, const char **argv UNUSED)
 {
 	char code[3] = { 0x4D, 0xFF };
 
@@ -239,7 +317,7 @@ static int a125_reset(int argc, const char **argv)
 	return 0;
 }
 
-static int a125_clear(int argc, const char **argv)
+static int a125_clear(int argc, const char **argv UNUSED)
 {
 	char code[3] = { 0x4D, 0x0D };
 
@@ -256,7 +334,7 @@ static int a125_init(int argc, const char **argv)
 	const char *devicename;
 
 	if (argc > 1) {
-		printf("%s: module takes at most one argument\n", __func__);
+		print_log(LOG_ERR, "a125: takes at most one argument");
 		return -1;
 	}
 	if (argc > 0 )
@@ -264,10 +342,8 @@ static int a125_init(int argc, const char **argv)
 	else
 		devicename = "/dev/ttyS0";
 	err = serial_open(devicename);
-	if (err < 0) {
-		fprintf(stderr, "Error opening '%s'!\n", devicename);
+	if (err < 0)
 		return err;
-	}
 
 	err = register_command("lcd-reset",
 	                       "Reset the LCD",
