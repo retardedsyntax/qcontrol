@@ -48,7 +48,7 @@ struct piccommand {
 };
 
 bool g_use_syslog = false;
-char *version = "qcontrol 0.4.1\n";
+char *version = "qcontrol 0.5.0\n";
 char *usage = "Usage: qcontrol [OPTION...] [command] [args...]\n"
               "PIC Controller\n\n"
               "  -d, --daemon               Run the server as a daemon\n"
