@@ -316,6 +316,21 @@ static int ts41x_autopower(int argc, const char **argv)
 	return 0;
 }
 
+static int ts41x_wdt(int argc, const char **argv)
+{
+        char code = 0;
+
+        if (argc != 1)
+                return -1;
+        if (strcmp(argv[0], "off") == 0)
+                code = 0x67;
+        else
+                return -1;
+
+        return serial_write(&code, 1);
+        return 0;
+}
+
 static int ts41x_init(int argc, const char **argv UNUSED)
 {
 	int err;
@@ -361,6 +376,11 @@ static int ts41x_init(int argc, const char **argv UNUSED)
 	                       "Control the automatic power mechanism, options are:\n"
 	                       "\ton\n\toff\n",
 	                       ts41x_autopower);
+	err = register_command("watchdog",
+	                       "Disable the PIC watchdog",
+	                       "Watchdog options are:\n"
+	                       "\toff",
+	                       ts41x_wdt);
 
 	return pthread_create(&ts41x_thread, NULL, serial_poll, NULL);
 }

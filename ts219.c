@@ -315,6 +315,21 @@ static int ts219_autopower(int argc, const char **argv)
 	return 0;
 }
 
+static int ts219_wdt(int argc, const char **argv)
+{
+        char code = 0;
+
+        if (argc != 1)
+                return -1;
+        if (strcmp(argv[0], "off") == 0)
+                code = 0x67;
+        else
+                return -1;
+
+        return serial_write(&code, 1);
+        return 0;
+}
+
 static int ts219_init(int argc, const char **argv UNUSED)
 {
 	int err;
@@ -361,6 +376,11 @@ static int ts219_init(int argc, const char **argv UNUSED)
 	                       "Control the automatic power mechanism, options are:\n"
 	                       "\ton\n\toff\n",
 	                       ts219_autopower);
+	err = register_command("watchdog",
+	                       "Disable the PIC watchdog",
+	                       "Watchdog options are:\n"
+	                       "\toff",
+	                       ts219_wdt);
 
 	return pthread_create(&ts219_thread, NULL, serial_poll, NULL);
 }
