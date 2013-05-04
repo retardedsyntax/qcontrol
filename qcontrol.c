@@ -549,6 +549,7 @@ static int start_daemon(bool daemon_mode)
 		openlog("qcontrol", LOG_PID, LOG_DAEMON);
 	}
 
+	print_log(LOG_INFO, "qcontrol " QCONTROL_VERSION " daemon starting.");
 	err = pic_lua_setup(&lua);
 	if (err != 0)
 		return -1;
