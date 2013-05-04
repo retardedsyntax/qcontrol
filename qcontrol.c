@@ -92,13 +92,10 @@ int print_log(int priority, const char *format, ...)
 	if (g_use_syslog == true) {
 		vsyslog(priority, format, ap);
 	} else {
-		if (priority == LOG_ERR) {
-			err = vfprintf(stderr, format, ap);
-			printf("\n");
-		} else {
-			err = vprintf(format, ap);
-			printf("\n");
-		}
+		FILE *f = (priority == LOG_ERR) ? stderr : stdout;
+		err = vfprintf(f, format, ap);
+		fprintf(f, "\n");
+		fflush(f);
 	}
 
 	va_end(ap);
