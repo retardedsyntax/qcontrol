@@ -162,7 +162,10 @@ int get_args(int *argc, const char ***argv)
 	*argc = lua_gettop(lua);
 	*argv = (const char **) calloc(*argc, sizeof(char*));
 	for (i = 1; i <= *argc; ++i) {
-		*(*argv + i - 1) = (const char*) lua_tostring(lua, i);
+		const char *arg = (const char*) lua_tostring(lua, i);
+		if (!arg)
+			return -1;
+		*(*argv + i - 1) = arg;
 	}
 	return 0;
 }
@@ -173,8 +176,10 @@ static int register_module(lua_State *L UNUSED)
 	const char **argv;
 
 	err = get_args(&argc, &argv);
-	if (err < 0)
+	if (err < 0) {
 		print_log(LOG_ERR, "register() - Error getting arguments");
+		return err;
+	}
 
 	for (i = 0; modules[i]; ++i) {
 		if (strcmp(argv[0], modules[i]->name) != 0)
