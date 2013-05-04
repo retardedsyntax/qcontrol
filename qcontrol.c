@@ -58,7 +58,7 @@ char *usage = "Usage: qcontrol [OPTION...] [command] [args...]\n"
               "Mandatory or optional arguments to long options are also "
               "mandatory or optional\nfor any corresponding short options.\n";
 static const char *configfilename = "/etc/qcontrol.conf";
-static lua_State *lua;
+static lua_State *lua = NULL;
 unsigned int commandcount;
 struct piccommand **commands;
 
@@ -160,7 +160,7 @@ int get_args(int *argc, const char ***argv)
 	int i;
 
 	*argc = lua_gettop(lua);
-	*argv = (const char **) calloc(*argc, sizeof(char*));
+	*argv = (const char **) lua_newuserdata(lua, *argc * sizeof(char*));
 	for (i = 1; i <= *argc; ++i) {
 		const char *arg = (const char*) lua_tostring(lua, i);
 		if (!arg)
@@ -293,11 +293,17 @@ static const char *help_command(const char *cmd)
 	return "Command not found\n";
 }
 
+static void pic_lua_close(void)
+{
+	lua_close(lua);
+}
+
 static int pic_lua_setup(lua_State **L UNUSED)
 {
 	int err;
 
 	lua = lua_open();
+	atexit(pic_lua_close);
 	luaL_openlibs(lua);
 
 	lua_register(lua, "register", register_module);
