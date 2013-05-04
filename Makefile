@@ -1,9 +1,10 @@
 VERSION=0.5.1~pre
 
-CFLAGS=-Os -Wall -DQCONTROL_VERSION=\"$(VERSION)\"
-CPPFLAGS=-I /usr/include/lua5.1
-LDFLAGS=
-LIBS=-llua5.1 -lpthread
+CFLAGS   += -Os -Wall -DQCONTROL_VERSION=\"$(VERSION)\"
+CPPFLAGS += -I/usr/include/lua5.1
+LDFLAGS  +=
+LIBS     += -llua5.1 -lpthread
+
 SOURCES=qcontrol.c ts209.c ts219.c ts409.c ts41x.c evdev.c a125.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=qcontrol
