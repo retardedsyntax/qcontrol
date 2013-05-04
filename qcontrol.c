@@ -56,8 +56,7 @@ char *usage = "Usage: qcontrol [OPTION...] [command] [args...]\n"
               "  -?, --help                 Give this help list\n"
               "  -V, --version              Print program version\n\n"
               "Mandatory or optional arguments to long options are also "
-              "mandatory or optional\nfor any corresponding short options.\n\n"
-              "Report bugs to <byron.bbradley@gmail.com>.\n";
+              "mandatory or optional\nfor any corresponding short options.\n";
 static const char *configfilename = "/etc/qcontrol.conf";
 static lua_State *lua;
 unsigned int commandcount;
