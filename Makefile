@@ -1,4 +1,6 @@
-CFLAGS=-Os -Wall
+VERSION=0.5.0
+
+CFLAGS=-Os -Wall -DQCONTROL_VERSION=\"$(VERSION)\"
 CPPFLAGS=-I /usr/include/lua5.1
 LDFLAGS=
 LIBS=-llua5.1 -lpthread
@@ -16,5 +18,15 @@ $(EXECUTABLE): $(OBJECTS)
 
 clean:
 	rm -f $(OBJECTS) $(EXECUTABLE)
+
+dist: RELEASES := $(PWD)/../releases/
+dist: TARBALL := qcontrol-$(VERSION).tar
+dist: TAG := v$(VERSION)
+dist:
+	git tag -v $(TAG)
+	git archive --format=tar --prefix=qcontrol-$(VERSION)/ --output $(RELEASES)/$(TARBALL) $(TAG)
+	cat $(RELEASES)/$(TARBALL) | gzip -c9 > $(RELEASES)/$(TARBALL).gz
+	xz --stdout --compress $(RELEASES)/$(TARBALL) > $(RELEASES)/$(TARBALL).xz
+	cd $(RELEASES) && sha256sum $(TARBALL) $(TARBALL).gz $(TARBALL).xz > $(TARBALL).sha256
 
 $(OBJECTS): picmodule.h
