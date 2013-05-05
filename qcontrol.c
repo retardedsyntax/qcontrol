@@ -28,6 +28,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <glob.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -147,6 +148,80 @@ static void return_error(const char *error)
 {
 	lua_pushstring(lua, error);
 	lua_error(lua);
+}
+
+/**
+ * Load files from a configuration dir.
+ */
+static int confdir(lua_State *L UNUSED)
+{
+	static const char *gl_match = "/*.conf";
+	const char *path = lua_tostring(lua, 1);
+	glob_t gl;
+	char *gl_path;
+	int rc, i;
+
+	if (!path) {
+		print_log(LOG_ERR, "confdir: no path given");
+		return -1;
+	}
+
+	print_log(LOG_ERR, "confdir: loading from %s...", path);
+
+	gl_path = lua_newuserdata(lua, strlen(path) + sizeof(gl_match));
+	if (!gl_path) {
+		print_log(LOG_ERR, "confdir: out of memory allocating path");
+		return -1;
+	}
+	strcpy(gl_path, path);
+	strcat(gl_path, gl_match);
+
+	rc = glob(gl_path, 0, NULL, &gl);
+
+	switch (rc) {
+	case 0: /* Success */ break;
+	case GLOB_NOMATCH: /* No matches, this is ok */
+		return 0;
+
+	case GLOB_NOSPACE:
+		print_log(LOG_ERR, "confdir: out of memory during glob");
+		return -1;
+	case GLOB_ABORTED:
+		print_log(LOG_ERR, "confdir: read error during glob");
+		return -1;
+	default:
+		print_log(LOG_ERR, "confdir: unknown error %d during glob", rc);
+		return -1;
+	}
+
+	for (i=0; i<gl.gl_pathc; i++) {
+		struct stat st_buf;
+
+		path = gl.gl_pathv[i];
+
+		rc = stat(path, &st_buf);
+		if (rc < 0) {
+			print_log(LOG_ERR, "confdir: stat(%s) failed: %s",
+				  path, strerror(errno));
+			continue;
+		}
+		if (!S_ISREG(st_buf.st_mode) && !S_ISLNK(st_buf.st_mode)) {
+			print_log(LOG_DEBUG,
+				  "confdir: %s not a file or symlink",
+				  path);
+			continue;
+		}
+		print_log(LOG_ERR, "confdir: including %s", path);
+
+		rc = luaL_dofile(lua, path);
+		if (rc != 0) {
+			print_log(LOG_ERR, "%s", lua_tostring(lua, -1));
+			lua_pop(lua, 1);
+		}
+	}
+
+	globfree(&gl);
+	return 0;
 }
 
 /**
@@ -306,6 +381,7 @@ static int pic_lua_setup(lua_State **L UNUSED)
 	lua_register(lua, "register", register_module);
 	lua_register(lua, "piccmd", run_command_lua);
 	lua_register(lua, "logprint", script_print);
+	lua_register(lua, "confdir", confdir);
 
 	err = luaL_dofile(lua, configfilename);
 	if (err != 0) {
