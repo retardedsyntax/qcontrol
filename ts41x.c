@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2007-2008  Byron Bradley (byron.bbradley@gmail.com)
  * Copyright (C) 2008, 2009  Martin Michlmayr (tbm@cyrius.com)
+ * Copyright (C) 2013 Michael Stapelberg (michael+qnap@stapelberg.de)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +32,15 @@
 #include <linux/input.h>
 
 #include "picmodule.h"
+
+/* These defines are from qnap’s GPL source code:
+ * src/linux-2.6.33.2-arm/include/qnap/pic.h
+ */
+#define QNAP_PIC_EUP_DISABLE                    0xF4
+#define QNAP_PIC_EUP_ENABLE                     0xF5
+
+#define QNAP_PIC_WOL_ENABLE                     0xF2
+#define QNAP_PIC_WOL_DISABLE                    0xF3
 
 static int serial;
 static struct termios oldtio, newtio;
@@ -331,6 +341,49 @@ static int ts41x_wdt(int argc, const char **argv)
         return 0;
 }
 
+static int ts41x_eup(int argc, const char **argv)
+{
+	char code = 0;
+
+	if (argc != 1)
+		return -1;
+
+	if (strcmp(argv[0], "on") == 0)
+		code = QNAP_PIC_EUP_ENABLE;
+	else if (strcmp(argv[0], "off") == 0)
+		code = QNAP_PIC_EUP_DISABLE;
+	else
+		return -1;
+
+	serial_write(&code, 1);
+	return 0;
+}
+
+static int ts41x_wol(int argc, const char **argv)
+{
+	char code[2];
+	int len;
+
+	if (argc != 1)
+		return -1;
+
+	if (strcmp(argv[0], "on") == 0) {
+		/* EUP turns the device in such a deep power-saving
+		 * mode that WOL does not work. Therefore, in order
+		 * to have WOL turned on, we also disable EUP. */
+		code[0] = QNAP_PIC_WOL_ENABLE;
+		code[1] = QNAP_PIC_EUP_DISABLE;
+		len = 2;
+	} else if (strcmp(argv[0], "off") == 0) {
+		code[0] = QNAP_PIC_WOL_DISABLE;
+		len = 1;
+	} else
+		return -1;
+
+	serial_write(code, len);
+	return 0;
+}
+
 static int ts41x_init(int argc, const char **argv UNUSED)
 {
 	int err;
@@ -381,6 +434,16 @@ static int ts41x_init(int argc, const char **argv UNUSED)
 	                       "Watchdog options are:\n"
 	                       "\toff",
 	                       ts41x_wdt);
+	err = register_command("wol",
+	                       "Control Wake on LAN",
+	                       "Control Wake on LAN, options are:\n"
+	                       "\ton\n\toff",
+	                       ts41x_wol);
+	err = register_command("eup",
+	                       "Control EUP (Energy-using Products) power saving",
+	                       "Control EUP, options are:\n"
+	                       "\ton\n\toff",
+	                       ts41x_eup);
 
 	return pthread_create(&ts41x_thread, NULL, serial_poll, NULL);
 }

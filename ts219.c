@@ -358,9 +358,10 @@ static int ts219_eup(int argc, const char **argv)
 	return 0;
 }
 
-static int ts219_wakeonlan(int argc, const char **argv)
+static int ts219_wol(int argc, const char **argv)
 {
-	unsigned char code[3] = { 0, 0, 0 };
+	unsigned char code[2];
+	int len;
 
 	if (argc != 1)
 		return -1;
@@ -371,12 +372,14 @@ static int ts219_wakeonlan(int argc, const char **argv)
 		 * to have WOL turned on, we also disable EUP. */
 		code[0] = QNAP_PIC_WOL_ENABLE;
 		code[1] = QNAP_PIC_EUP_DISABLE;
-	} else if (strcmp(argv[0], "off") == 0)
+		len = 2;
+	} else if (strcmp(argv[0], "off") == 0) {
 		code[0] = QNAP_PIC_WOL_DISABLE;
-	else
+		len = 1;
+	} else
 		return -1;
 
-	serial_write(code, strlen(code));
+	serial_write(code, len);
 	return 0;
 }
 
@@ -431,11 +434,11 @@ static int ts219_init(int argc, const char **argv UNUSED)
 	                       "Watchdog options are:\n"
 	                       "\toff",
 	                       ts219_wdt);
-	err = register_command("wakeonlan",
+	err = register_command("wol",
 	                       "Control Wake on LAN",
 	                       "Control Wake on LAN, options are:\n"
 	                       "\ton\n\toff",
-	                       ts219_wakeonlan);
+	                       ts219_wol);
 	err = register_command("eup",
 	                       "Control EUP (Energy-using Products) power saving",
 	                       "Control EUP, options are:\n"
