@@ -317,7 +317,7 @@ static int ts219_autopower(int argc, const char **argv)
 
 static int ts219_wdt(int argc, const char **argv)
 {
-        char code = 0;
+        unsigned char code = 0;
 
         if (argc != 1)
                 return -1;
