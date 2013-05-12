@@ -1,4 +1,4 @@
-VERSION=0.5.1~pre
+VERSION=0.5.1
 
 CFLAGS   += -Os -Wall -DQCONTROL_VERSION=\"$(VERSION)\"
 CPPFLAGS += -I/usr/include/lua5.1
