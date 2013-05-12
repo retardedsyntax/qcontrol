@@ -28,7 +28,7 @@ fanfail = 0
 function fan_error(  )
 	fanfail = fanfail + 1
 	if fanfail == 3 then
-		print("ts409: fan error")
+		logprint("ts409: fan error")
 		piccmd("statusled", "red2hz")
 		piccmd("buzzer", "long")
 	else
@@ -43,18 +43,44 @@ function fan_normal(  )
 	fanfail = 0
 end
 
-function temp( temp )
-	print("ts409 temperature:", temp)
-	if temp > 80 then
-		piccmd("fanspeed", "full")
-	else
-		if temp > 70 then
-			piccmd("fanspeed", "high")
-		end
-	else
-		if temp > 55 then
-			piccmd("fanspeed", "medium")
-		end
+last_temp_log = nil
+last_temp_value = 0
+
+function logtemp( temp )
+	now = os.time()
+	-- Log only every 5 minutes or if the temperature has changed by
+	-- more than 5.
+	if ( ( not last_temp_log ) or
+	     ( os.difftime(now, last_temp_log) >= 300 ) or
+	     ( math.abs( temp - last_temp_value ) >= 5 ) ) then
+		logprint(string.format("ts409: temperature %d", temp))
+		last_temp_log = now
+		last_temp_value = temp
 	end
 end
 
+last_fan_setting = nil
+
+function setfan( speed )
+	if ( ( not last_fan_setting ) or
+	     ( last_fan_setting ~= speed ) ) then
+		logprint(string.format("ts409: setting fan to \"%s\"", speed))
+	end
+	piccmd("fanspeed", speed)
+	last_fan_setting = speed
+end
+
+function temp( temp )
+	logtemp(temp)
+	if temp > 80 then
+		setfan("full")
+	elseif temp > 70 then
+		setfan("high")
+	elseif temp > 55 then
+		setfan("medium")
+	elseif temp > 30 then
+		setfan("low")
+	else
+		setfan("silence")
+	end
+end

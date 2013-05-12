@@ -23,12 +23,78 @@ function media_button( time )
 	piccmd("usbled", "8hz")
 end
 
+function lcd_button( state, down, up )
+-- exactly key 1 and 2 pressed switches backlight off
+	if state == 3 then
+		piccmd("lcd-backlight", "off")
+	else
+-- any key pressed activates the backlight
+		if down ~= 0 then
+			piccmd("lcd-backlight", "on")
+		end
+-- pressing key 1 switches off the usbled the media-key enables...
+		if down == 1 then
+			piccmd("usbled", "off")
+		end
+	end
+end
+
+-- If argument is a function then call it, else return it.
+function evalfn(f)
+	if type(f) == "function" then
+		return f(  )
+	else
+		return f
+	end
+end
+
+-- Select a value based on the state of a GPIO pin.
+--
+-- results == list of result to return for each state
+-- value=0       => results[1]
+-- value=1       => results[2]
+-- value unknown => results[3]
+--
+-- If result[N] is a function it will be called,
+-- otherwise it is simply returned as is.
+function gpio_select(number, results)
+	local path=string.format("/sys/class/gpio/gpio%d/value", number)
+	local gpio=io.open(path)
+	if not gpio then
+		logprint("ts41x: "..path.." does not exist, trying to enable")
+		g = io.open("/sys/class/gpio/enable")
+		if not g then
+			logprint("ts41x: unable to open gpio control file")
+			return evalfn(results[3])
+		end
+		g:write(number)
+		gpio=io.open(path)
+	end
+	if not gpio then
+		logprint("ts41x: unable to open gpio file")
+		return evalfn(results[3])
+	end
+
+	local v=gpio:read("*n")
+
+	if v == 0     then return evalfn(results[1])
+	elseif v == 1 then return evalfn(results[2])
+	else               return evalfn(results[3])
+	end
+end
+
+-- MPP45_GPIO, JP1: 0: LCD, 1: serial console
+gpio_select(45, {
+	function () register("a125", "/dev/ttyS0") end,
+	nil,
+	nil})
+
 fanfail = 0
 
 function fan_error(  )
 	fanfail = fanfail + 1
 	if fanfail == 3 then
-		print("ts41x: fan error")
+		logprint("ts41x: fan error")
 		piccmd("statusled", "red2hz")
 		piccmd("buzzer", "long")
 	else
@@ -43,18 +109,44 @@ function fan_normal(  )
 	fanfail = 0
 end
 
-function temp( temp )
-	print("ts41x temperature:", temp)
-	if temp > 80 then
-		piccmd("fanspeed", "full")
-	else
-		if temp > 70 then
-			piccmd("fanspeed", "high")
-		end
-	else
-		if temp > 55 then
-			piccmd("fanspeed", "medium")
-		end
+last_temp_log = nil
+last_temp_value = 0
+
+function logtemp( temp )
+	now = os.time()
+	-- Log only every 5 minutes or if the temperature has changed by
+	-- more than 5.
+	if ( ( not last_temp_log ) or
+	     ( os.difftime(now, last_temp_log) >= 300 ) or
+	     ( math.abs( temp - last_temp_value ) >= 5 ) ) then
+		logprint(string.format("ts41x: temperature %d", temp))
+		last_temp_log = now
+		last_temp_value = temp
 	end
 end
 
+last_fan_setting = nil
+
+function setfan( speed )
+	if ( ( not last_fan_setting ) or
+	     ( last_fan_setting ~= speed ) ) then
+		logprint(string.format("ts41x: setting fan to \"%s\"", speed))
+	end
+	piccmd("fanspeed", speed)
+	last_fan_setting = speed
+end
+
+function temp( temp )
+	logtemp(temp)
+	if temp > 80 then
+		setfan("full")
+	elseif temp > 70 then
+		setfan("high")
+	elseif temp > 55 then
+		setfan("medium")
+	elseif temp > 30 then
+		setfan("low")
+	else
+		setfan("silence")
+	end
+end

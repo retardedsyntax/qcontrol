@@ -1,9 +1,9 @@
 --[[
 	Configuration file for qcontrol (LUA syntax)
-	Supports both QNAP TS-109 and TS-209.
+	Supports QNAP TS-110, TS-119, TS-210, TS-219 and TS-219P.
 --]]
 
-register("ts209")
+register("ts219")
 
 -- Requires CONFIG_KEYBOARD_GPIO enabled in the kernel and
 -- the kernel module gpio_keys to be loaded.
@@ -28,7 +28,7 @@ fanfail = 0
 function fan_error(  )
 	fanfail = fanfail + 1
 	if fanfail == 3 then
-		logprint("ts209: fan error")
+		logprint("ts219: fan error")
 		piccmd("statusled", "red2hz")
 		piccmd("buzzer", "long")
 	else
@@ -43,21 +43,45 @@ function fan_normal(  )
 	fanfail = 0
 end
 
+last_temp_log = nil
+last_temp_value = 0
+
+function logtemp( temp )
+	now = os.time()
+	-- Log only every 5 minutes or if the temperature has changed by
+	-- more than 5.
+	if ( ( not last_temp_log ) or
+	     ( os.difftime(now, last_temp_log) >= 300 ) or
+	     ( math.abs( temp - last_temp_value ) >= 5 ) ) then
+		logprint(string.format("ts219: temperature %d", temp))
+		last_temp_log = now
+		last_temp_value = temp
+	end
+end
+
 last_fan_setting = nil
 
 function setfan( speed )
 	if ( ( not last_fan_setting ) or
 	     ( last_fan_setting ~= speed ) ) then
-		logprint(string.format("ts209: setting fan to \"%s\"", speed))
+		logprint(string.format("ts219: setting fan to \"%s\"", speed))
 	end
 	piccmd("fanspeed", speed)
 	last_fan_setting = speed
 end
 
-function temp_low(  )
-	setfan("silence")
+function temp( temp )
+	logtemp(temp)
+	if temp > 80 then
+		setfan("full")
+	elseif temp > 70 then
+		setfan("high")
+	elseif temp > 55 then
+		setfan("medium")
+	elseif temp > 30 then
+		setfan("low")
+	else
+		setfan("silence")
+	end
 end
 
-function temp_high(  )
-	setfan("full")
-end
