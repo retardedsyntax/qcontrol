@@ -155,7 +155,7 @@ static void return_error(const char *error)
  */
 static int confdir(lua_State *L UNUSED)
 {
-	static const char *gl_match = "/*.conf";
+	static const char gl_match[] = "/*.conf";
 	const char *path = lua_tostring(lua, 1);
 	glob_t gl;
 	char *gl_path;
