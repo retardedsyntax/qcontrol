@@ -22,7 +22,7 @@ $(EXECUTABLE)-static: $(OBJECTS)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE)
+	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE)-static
 
 dist: RELEASES := $(PWD)/../releases/
 dist: TARBALL := qcontrol-$(VERSION).tar
