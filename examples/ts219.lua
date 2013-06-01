@@ -3,6 +3,7 @@
 	Supports QNAP TS-110, TS-119, TS-210, TS-219 and TS-219P.
 --]]
 
+confdir("/etc/qcontrol.d")
 register("ts219")
 
 -- Requires CONFIG_KEYBOARD_GPIO enabled in the kernel and
