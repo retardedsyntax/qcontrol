@@ -85,6 +85,9 @@ static int ts41x_read_serial_events(void)
 	case 0x40:
 		call_function("power_button", "%d", 3);
 		break;
+	case 0x43:
+		/* RTC Wake-Up (ignored) */
+		break;
 	case 0x73:
 	case 0x75:
 	case 0x77:

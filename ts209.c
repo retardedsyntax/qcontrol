@@ -75,6 +75,9 @@ static int ts209_read_serial_events(void)
 	case 0x40:
 		call_function("power_button", "%d", 3);
 		break;
+	case 0x43:
+		/* RTC Wake-Up (ignored) */
+		break;
 	case 0x73:
 		call_function("fan_error", "");
 		break;
