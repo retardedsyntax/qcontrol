@@ -70,17 +70,39 @@ function setfan( speed )
 	last_fan_setting = speed
 end
 
+-- hysteresis implementation:
+--    - - > 35 > - - - > 40 > - - - > 50 > - - - > 65 > - - -
+--  silence --    low    --  medium   --   high    -- full  |
+--    - - < 32 < - - - < 35 < - - - < 45 < - - - < 55 < - - -
 function temp( temp )
 	logtemp(temp)
-	if temp > 80 then
-		setfan("full")
-	elseif temp > 70 then
-		setfan("high")
-	elseif temp > 55 then
-		setfan("medium")
-	elseif temp > 30 then
-		setfan("low")
+	if last_fan_setting == "full" then
+		if temp < 55 then
+			setfan("high")
+		end
+	elseif last_fan_setting == "high" then
+		if temp > 65 then
+			setfan("full")
+		elseif temp < 45 then
+			setfan("medium")
+		end
+	elseif last_fan_setting == "medium" then
+		if temp > 50 then
+			setfan("high")
+		elseif temp < 35 then
+			setfan("low")
+		end
+	elseif last_fan_setting == "low" then
+		if temp > 40 then
+			setfan("medium")
+		elseif temp < 32 then
+			setfan("silence")
+		end
+	elseif last_fan_setting == "silence" then
+		if temp > 35 then
+			setfan("low")
+		end
 	else
-		setfan("silence")
+		setfan("high")
 	end
 end
