@@ -3,7 +3,6 @@
 	Supports the QNAP TS-409.
 --]]
 
-confdir("/etc/qcontrol.d")
 register("ts409")
 
 -- Requires CONFIG_KEYBOARD_GPIO enabled in the kernel and
@@ -107,3 +106,5 @@ function temp( temp )
 		setfan("high")
 	end
 end
+
+confdir("/etc/qcontrol.d")

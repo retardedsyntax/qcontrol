@@ -3,8 +3,6 @@
 	Supports the HP Media Vault mv2120.
 --]]
 
-confdir("/etc/qcontrol.d")
-
 -- Requires CONFIG_KEYBOARD_GPIO enabled in the kernel and
 -- the kernel module gpio_keys to be loaded.
 register("evdev", "/dev/input/by-path/platform-gpio-keys-event",
@@ -19,3 +17,4 @@ function restart_button( time )
 	os.execute("reboot")
 end
 
+confdir("/etc/qcontrol.d")

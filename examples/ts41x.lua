@@ -3,7 +3,6 @@
 	Supports the QNAP TS-410, TS-410U, TS-419P and TS-419U.
 --]]
 
-confdir("/etc/qcontrol.d")
 register("ts41x")
 
 -- Requires CONFIG_KEYBOARD_GPIO enabled in the kernel and
@@ -173,3 +172,5 @@ function temp( temp )
 		setfan("high")
 	end
 end
+
+confdir("/etc/qcontrol.d")
