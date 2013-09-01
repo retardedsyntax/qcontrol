@@ -2,8 +2,8 @@
 Description=qcontrold
 Requires=dev-input-by\x2dpath-platform\x2dgpio\x2dkeys\x2devent.device
 After=dev-input-by\x2dpath-platform\x2dgpio\x2dkeys\x2devent.device
+# If the config file is there, we assume qcontrol works on this machine.
+ConditionPathExists=/etc/qcontrol.conf
 
 [Service]
-# qcontrol only works on some devices, so verify this system is supported.
-ExecStartPre=/bin/grep -q 'Hardware[[:space:]]*: QNAP TS-\(109/TS-209\|119/TS-219\|409\|41x\)' /proc/cpuinfo
 ExecStart=/usr/sbin/qcontrol -f
