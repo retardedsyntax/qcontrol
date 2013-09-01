@@ -34,6 +34,10 @@
 #include <sys/types.h>
 #include <sys/un.h>
 
+#ifdef HAVE_SYSTEMD
+#include <systemd/sd-daemon.h>
+#endif
+
 #include "picmodule.h"
 
 #define PIC_SOCKET	"/var/run/qcontrol.sock"
@@ -491,14 +495,23 @@ static int network_send(int argc, const char **argv)
 	return err;
 }
 
-static int network_listen(void)
+static int open_socket(void)
 {
-	int sock, err, con, argc, off=0, i;
-	char **argv;
-	socklen_t remotelen;
-	char buf[MAX_NET_BUF], *rbuf;
-	int maxlen = MALLOC_SIZE;
-	struct sockaddr_un name, remote;
+	int sock, err;
+	struct sockaddr_un name;
+
+#ifdef HAVE_SYSTEMD
+	int fds;
+	/* When qcontrol gets socket-activated by systemd, fds is > 0 to indicate
+	 * that a socket was inherited which we can just use, i.e. we don’t need to
+	 * create and listen() on a new socket on our own. */
+	fds = sd_listen_fds(0);
+	if (fds < 0) {
+		print_log(LOG_ERR, "Error in sd_listen_fds()");
+		return -1;
+	}
+	return SD_LISTEN_FDS_START;
+#endif
 
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sock < 0) {
@@ -536,6 +549,20 @@ static int network_listen(void)
 		          strerror(errno));
 		return -1;
 	}
+
+	return sock;
+}
+
+static int network_listen(void)
+{
+	int err, con, argc, off=0, i;
+	char **argv;
+	socklen_t remotelen;
+	char buf[MAX_NET_BUF], *rbuf;
+	int maxlen = MALLOC_SIZE;
+	struct sockaddr_un remote;
+
+	int sock = open_socket();
 
 	remotelen = sizeof(remote);
 	for (;;) {

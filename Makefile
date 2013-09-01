@@ -6,6 +6,12 @@ LDFLAGS  +=
 LIBS     += -llua5.1 -lpthread
 LIBS_STATIC += /usr/lib/liblua5.1.a -lpthread -lm -ldl
 
+ifeq ($(shell pkg-config --exists libsystemd-daemon 2>/dev/null && echo 1),1)
+CPPFLAGS += -DHAVE_SYSTEMD
+CFLAGS   += $(shell pkg-config --cflags libsystemd-daemon)
+LIBS     += $(shell pkg-config --libs libsystemd-daemon)
+endif
+
 SOURCES=qcontrol.c ts209.c ts219.c ts409.c ts41x.c evdev.c a125.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=qcontrol
