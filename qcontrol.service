@@ -1,0 +1,17 @@
+[Unit]
+Description=qcontrol
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+# qcontrol only works on some devices, so verify this system is supported.
+ExecStartPre=/bin/grep -q 'Hardware[[:space:]]*: QNAP TS-\(109/TS-209\|119/TS-219\|409\|41x\)' /proc/cpuinfo
+ExecStart=/usr/sbin/qcontrol statusled greenon
+ExecStart=/usr/sbin/qcontrol powerled on
+ExecStart=/usr/sbin/qcontrol buzzer short
+ExecStop=/usr/sbin/qcontrol buzzer short
+ExecStop=/usr/sbin/qcontrol statusled redon
+ExecStop=/usr/sbin/qcontrol powerled 1hz
+
+[Install]
+WantedBy=multi-user.target
