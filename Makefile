@@ -1,10 +1,12 @@
 VERSION=0.5.2~pre
 
-CFLAGS   += -Os -Wall -DQCONTROL_VERSION=\"$(VERSION)\"
-CPPFLAGS += -I/usr/include/lua5.1
-LDFLAGS  +=
-LIBS     += -llua5.1 -lpthread
+CFLAGS   += -Os -Wall
+CPPFLAGS += -DQCONTROL_VERSION=\"$(VERSION)\"
+LIBS     += -lpthread
 LIBS_STATIC += /usr/lib/liblua5.1.a -lpthread -lm -ldl
+
+CFLAGS   += $(shell pkg-config --cflags lua5.1)
+LIBS     += $(shell pkg-config --libs lua5.1)
 
 ifeq ($(shell pkg-config --exists libsystemd-daemon 2>/dev/null && echo 1),1)
 CPPFLAGS += -DHAVE_SYSTEMD
