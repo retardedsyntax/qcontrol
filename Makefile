@@ -6,7 +6,7 @@ LDFLAGS  +=
 LIBS     += -llua5.1 -lpthread
 LIBS_STATIC += /usr/lib/liblua5.1.a -lpthread -lm -ldl
 
-SOURCES=qcontrol.c ts209.c ts219.c ts409.c ts41x.c evdev.c a125.c
+SOURCES=qcontrol.c system.c ts209.c ts219.c ts409.c ts41x.c evdev.c a125.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=qcontrol
 

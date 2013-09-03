@@ -63,6 +63,7 @@ static lua_State *lua = NULL;
 unsigned int commandcount;
 struct piccommand **commands;
 
+extern struct picmodule system_module;
 extern struct picmodule ts209_module;
 extern struct picmodule ts219_module;
 extern struct picmodule ts409_module;
@@ -71,6 +72,7 @@ extern struct picmodule a125_module;
 extern struct picmodule evdev_module;
 
 struct picmodule *modules[] = {
+	&system_module,
 	&ts209_module,
 	&ts219_module,
 	&ts409_module,
