@@ -1,0 +1,17 @@
+[Unit]
+Description=qcontrol
+# If the config file is there, we assume qcontrol works on this machine.
+ConditionPathExists=/etc/qcontrol.conf
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/usr/sbin/qcontrol statusled greenon
+ExecStart=/usr/sbin/qcontrol powerled on
+ExecStart=/usr/sbin/qcontrol buzzer short
+ExecStop=/usr/sbin/qcontrol buzzer short
+ExecStop=/usr/sbin/qcontrol statusled redon
+ExecStop=/usr/sbin/qcontrol powerled 1hz
+
+[Install]
+WantedBy=multi-user.target
