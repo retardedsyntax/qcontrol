@@ -147,9 +147,16 @@ function logtemp( temp )
 		if ( delta_temp >= 5 ) then
 			return true
 		end
-		-- More than 5 minutes have elapsed
+		-- More than 5 minutes have elapsed...
 		if ( delta_time >= 300 ) then
-			return true
+			if ( delta_temp > 1 ) then
+				--- ...and the change is by more than +/-1
+				return true
+			else
+				--- ...insignificant change, wait another 5 minutes
+				last_temp_log = now
+				return false
+			end
 		end
 		-- Otherwise no need to log
 		return false
