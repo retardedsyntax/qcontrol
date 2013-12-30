@@ -15,16 +15,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <syslog.h>
 #include "picmodule.h"
 
 static int system_status(int argc, const char **argv)
 {
+	if (argc != 0)
+		return -1;
+	
 	call_function("system_status", "%s", argv[0]);
 	return 0;
 }
 
 static int system_init(int argc, const char **argv UNUSED)
 {
+	if (argc > 0) {
+		print_log(LOG_ERR, "%s: module does not take any arguments\n",
+			  __func__);
+		return -1;
+	}
+
 	register_command("system-status",
 			 "Signal system status",
 			 "",
