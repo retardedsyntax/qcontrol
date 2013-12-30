@@ -136,16 +136,19 @@ function logtemp( temp )
 	now = os.time()
 
 	local function should_log(  )
+		local delta_temp = math.abs(temp - last_temp_value)
+		local delta_time = os.difftime(now, last_temp_log)
+
 		-- Haven't previously logged, log now for the first time
 		if ( not last_temp_log ) then
 			return true
 		end
 		-- Temperature has changed by more than 5
-		if ( math.abs( temp - last_temp_value ) >= 5 ) then
+		if ( delta_temp >= 5 ) then
 			return true
 		end
 		-- More than 5 minutes have elapsed
-		if ( os.difftime(now, last_temp_log) >= 300 ) then
+		if ( delta_time >= 300 ) then
 			return true
 		end
 		-- Otherwise no need to log
