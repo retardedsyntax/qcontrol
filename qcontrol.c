@@ -344,6 +344,16 @@ static int run_command_lua(lua_State *L UNUSED)
 	return run_command(argv[0], argc-1, argv+1);
 }
 
+static int run_command_direct(const char *cmd, int argc, const char **argv)
+{
+	int err = run_command(cmd, argc, argv);
+
+	if (err < 0)
+		return -1;
+
+	return 0;
+}
+
 static int script_print(lua_State *L UNUSED)
 {
 	int argc, err;
@@ -696,7 +706,7 @@ int main(int argc, const char *argv[])
 	} else if (argc > 2 && strcmp(argv[1], "--direct") == 0) {
 		/* Execute a single command and terminate */
 		pic_lua_setup(&lua);
-		return run_command(argv[2], argc - 3, argv + 3);
+		return run_command_direct(argv[2], argc - 3, argv + 3);
 	} else if (argc > 1) {
 		/* Send the command to the server */
 		return network_send(argc - 1, argv + 1);
