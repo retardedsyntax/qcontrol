@@ -133,7 +133,7 @@ last_temp_log = nil
 last_temp_value = 0
 
 function logtemp( temp )
-	now = os.time()
+	local now = os.time()
 
 	local function should_log(  )
 		local delta_temp = math.abs(temp - last_temp_value)
