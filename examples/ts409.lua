@@ -128,3 +128,8 @@ function temp( temp )
 end
 
 confdir("/etc/qcontrol.d")
+--
+-- Local variables:
+-- mode: lua
+-- indent-level: 8
+-- End:
