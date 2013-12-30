@@ -165,7 +165,8 @@ static int confdir(lua_State *L UNUSED)
 	const char *path = lua_tostring(lua, 1);
 	glob_t gl;
 	char *gl_path;
-	int rc, i;
+	size_t p;
+	int rc;
 
 	if (!path) {
 		print_log(LOG_ERR, "confdir: no path given");
@@ -200,10 +201,10 @@ static int confdir(lua_State *L UNUSED)
 		return -1;
 	}
 
-	for (i=0; i<gl.gl_pathc; i++) {
+	for (p=0; p<gl.gl_pathc; p++) {
 		struct stat st_buf;
 
-		path = gl.gl_pathv[i];
+		path = gl.gl_pathv[p];
 
 		rc = stat(path, &st_buf);
 		if (rc < 0) {
