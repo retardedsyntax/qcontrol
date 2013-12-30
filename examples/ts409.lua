@@ -68,11 +68,25 @@ last_temp_value = 0
 
 function logtemp( temp )
 	now = os.time()
-	-- Log only every 5 minutes or if the temperature has changed by
-	-- more than 5.
-	if ( ( not last_temp_log ) or
-	     ( os.difftime(now, last_temp_log) >= 300 ) or
-	     ( math.abs( temp - last_temp_value ) >= 5 ) ) then
+
+	local function should_log(  )
+		-- Haven't previously logged, log now for the first time
+		if ( not last_temp_log ) then
+			return true
+		end
+		-- Temperature has changed by more than 5
+		if ( math.abs( temp - last_temp_value ) >= 5 ) then
+			return true
+		end
+		-- More than 5 minutes have elapsed
+		if ( os.difftime(now, last_temp_log) >= 300 ) then
+			return true
+		end
+		-- Otherwise no need to log
+		return false
+	end
+
+	if ( should_log() ) then
 		logprint(string.format("ts409: temperature %d", temp))
 		last_temp_log = now
 		last_temp_value = temp
