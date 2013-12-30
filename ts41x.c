@@ -66,7 +66,7 @@ static int serial_read(unsigned char *buf, int len)
 	return err;
 }
 
-static int serial_write(char *buf, int len)
+static int serial_write(unsigned char *buf, int len)
 {
 	int err;
 
@@ -195,7 +195,7 @@ static void serial_close(void)
 
 static int ts41x_powerled(int argc, const char **argv)
 {
-	char code = 0;
+	unsigned char code = 0;
 
 	if (argc != 1)
 		return -1;
@@ -216,7 +216,7 @@ static int ts41x_powerled(int argc, const char **argv)
 
 static int ts41x_statusled(int argc, const char **argv)
 {
-	char code = 0;
+	unsigned char code = 0;
 
 	if (argc != 1)
 		return -1;
@@ -247,7 +247,7 @@ static int ts41x_statusled(int argc, const char **argv)
 
 static int ts41x_buzz(int argc, const char **argv)
 {
-	char code = 0;
+	unsigned char code = 0;
 
 	if (argc != 1)
 		return -1;
@@ -264,7 +264,7 @@ static int ts41x_buzz(int argc, const char **argv)
 
 static int ts41x_fanspeed(int argc, const char **argv)
 {
-	char code = 0;
+	unsigned char code = 0;
 
 	if (argc != 1)
 		return -1;
@@ -289,7 +289,7 @@ static int ts41x_fanspeed(int argc, const char **argv)
 
 static int ts41x_usbled(int argc, const char **argv)
 {
-	char code = 0;
+	unsigned char code = 0;
 
 	if (argc != 1)
 		return -1;
@@ -308,7 +308,7 @@ static int ts41x_usbled(int argc, const char **argv)
 
 static int ts41x_autopower(int argc, const char **argv)
 {
-	char code = 0;
+	unsigned char code = 0;
 
 	if (argc != 1)
 		return -1;
@@ -325,7 +325,7 @@ static int ts41x_autopower(int argc, const char **argv)
 
 static int ts41x_wdt(int argc, const char **argv)
 {
-        char code = 0;
+        unsigned char code = 0;
 
         if (argc != 1)
                 return -1;
@@ -339,7 +339,7 @@ static int ts41x_wdt(int argc, const char **argv)
 
 static int ts41x_eup(int argc, const char **argv)
 {
-	char code = 0;
+	unsigned char code = 0;
 
 	if (argc != 1)
 		return -1;
@@ -356,7 +356,7 @@ static int ts41x_eup(int argc, const char **argv)
 
 static int ts41x_wol(int argc, const char **argv)
 {
-	char code[2];
+	unsigned char code[2];
 	int len;
 
 	if (argc != 1)
