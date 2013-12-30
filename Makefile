@@ -1,6 +1,6 @@
 VERSION=0.5.3~pre
 
-CFLAGS   += -Os -Wall
+CFLAGS   += -Os -Wall -Wextra
 CPPFLAGS += -DQCONTROL_VERSION=\"$(VERSION)\"
 LIBS     += -lpthread
 LIBS_STATIC += /usr/lib/liblua5.1.a -lpthread -lm -ldl
