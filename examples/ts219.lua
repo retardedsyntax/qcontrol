@@ -81,10 +81,10 @@ end
 
 last_fan_setting = nil
 
-function setfan( speed )
+function setfan( temp, speed )
 	if ( ( not last_fan_setting ) or
 	     ( last_fan_setting ~= speed ) ) then
-		logprint(string.format("ts219: setting fan to \"%s\"", speed))
+		logprint(string.format("ts219: temperature %d setting fan to \"%s\"", temp, speed))
 	end
 	piccmd("fanspeed", speed)
 	last_fan_setting = speed
@@ -98,32 +98,32 @@ function temp( temp )
 	logtemp(temp)
 	if last_fan_setting == "full" then
 		if temp < 55 then
-			setfan("high")
+			setfan(temp, "high")
 		end
 	elseif last_fan_setting == "high" then
 		if temp > 65 then
-			setfan("full")
+			setfan(temp, "full")
 		elseif temp < 45 then
-			setfan("medium")
+			setfan(temp, "medium")
 		end
 	elseif last_fan_setting == "medium" then
 		if temp > 50 then
-			setfan("high")
+			setfan(temp, "high")
 		elseif temp < 35 then
-			setfan("low")
+			setfan(temp, "low")
 		end
 	elseif last_fan_setting == "low" then
 		if temp > 40 then
-			setfan("medium")
+			setfan(temp, "medium")
 		elseif temp < 32 then
-			setfan("silence")
+			setfan(temp, "silence")
 		end
 	elseif last_fan_setting == "silence" then
 		if temp > 35 then
-			setfan("low")
+			setfan(temp, "low")
 		end
 	else
-		setfan("high")
+		setfan(temp, "high")
 	end
 end
 
