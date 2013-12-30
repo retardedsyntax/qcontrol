@@ -267,8 +267,7 @@ static int a125_backlight(int argc, const char **argv)
 	else
 		return -1;
 
-	serial_write(code, 3);
-	return 0;
+	return serial_write(code, 3);
 }
 
 static int a125_line(int id, const char *line)
@@ -285,8 +284,7 @@ static int a125_line(int id, const char *line)
 		l = 16;
 	memcpy(code + 4, line, l);
 
-	serial_write(code, 20);
-	return 0;
+	return serial_write(code, 20);
 }
 
 
@@ -313,8 +311,7 @@ static int a125_reset(int argc, const char **argv UNUSED)
 	if (argc != 0)
 		return -1;
 
-	serial_write(code, 2);
-	return 0;
+	return serial_write(code, 2);
 }
 
 static int a125_clear(int argc, const char **argv UNUSED)
@@ -324,8 +321,7 @@ static int a125_clear(int argc, const char **argv UNUSED)
 	if (argc != 0)
 		return -1;
 
-	serial_write(code, 2);
-	return 0;
+	return serial_write(code, 2);
 }
 
 static int a125_init(int argc, const char **argv)

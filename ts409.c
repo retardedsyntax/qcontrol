@@ -212,7 +212,6 @@ static int ts409_statusled(int argc, const char **argv)
 		return -1;
 
 	return serial_write(&code, 1);
-	return 0;
 }
 
 static int ts409_buzz(int argc, const char **argv)
@@ -230,7 +229,6 @@ static int ts409_buzz(int argc, const char **argv)
 		return -1;
 
 	return serial_write(&code, 1);
-	return 0;
 }
 
 static int ts409_fanspeed(int argc, const char **argv)
@@ -256,7 +254,6 @@ static int ts409_fanspeed(int argc, const char **argv)
 		return -1;
 
 	return serial_write(&code, 1);
-	return 0;
 }
 
 static int ts409_usbled(int argc, const char **argv)
@@ -276,7 +273,6 @@ static int ts409_usbled(int argc, const char **argv)
 		return -1;
 
 	return serial_write(&code, 1);
-	return 0;
 }
 
 static int ts409_autopower(int argc, const char **argv)
@@ -294,7 +290,6 @@ static int ts409_autopower(int argc, const char **argv)
 		return -1;
 
 	return serial_write(&code, 1);
-	return 0;
 }
 
 static int ts409_init(int argc, const char **argv UNUSED)

@@ -212,7 +212,6 @@ static int ts41x_powerled(int argc, const char **argv)
 		return -1;
 
 	return serial_write(&code, 1);
-	return 0;
 }
 
 static int ts41x_statusled(int argc, const char **argv)
@@ -244,7 +243,6 @@ static int ts41x_statusled(int argc, const char **argv)
 		return -1;
 
 	return serial_write(&code, 1);
-	return 0;
 }
 
 static int ts41x_buzz(int argc, const char **argv)
@@ -262,7 +260,6 @@ static int ts41x_buzz(int argc, const char **argv)
 		return -1;
 
 	return serial_write(&code, 1);
-	return 0;
 }
 
 static int ts41x_fanspeed(int argc, const char **argv)
@@ -288,7 +285,6 @@ static int ts41x_fanspeed(int argc, const char **argv)
 		return -1;
 
 	return serial_write(&code, 1);
-	return 0;
 }
 
 static int ts41x_usbled(int argc, const char **argv)
@@ -308,7 +304,6 @@ static int ts41x_usbled(int argc, const char **argv)
 		return -1;
 
 	return serial_write(&code, 1);
-	return 0;
 }
 
 static int ts41x_autopower(int argc, const char **argv)
@@ -326,7 +321,6 @@ static int ts41x_autopower(int argc, const char **argv)
 		return -1;
 
 	return serial_write(&code, 1);
-	return 0;
 }
 
 static int ts41x_wdt(int argc, const char **argv)
@@ -341,7 +335,6 @@ static int ts41x_wdt(int argc, const char **argv)
                 return -1;
 
         return serial_write(&code, 1);
-        return 0;
 }
 
 static int ts41x_eup(int argc, const char **argv)
@@ -358,8 +351,7 @@ static int ts41x_eup(int argc, const char **argv)
 	else
 		return -1;
 
-	serial_write(&code, 1);
-	return 0;
+	return serial_write(&code, 1);
 }
 
 static int ts41x_wol(int argc, const char **argv)
@@ -383,8 +375,7 @@ static int ts41x_wol(int argc, const char **argv)
 	} else
 		return -1;
 
-	serial_write(code, len);
-	return 0;
+	return serial_write(code, len);
 }
 
 static int ts41x_init(int argc, const char **argv UNUSED)

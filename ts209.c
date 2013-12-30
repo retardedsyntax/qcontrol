@@ -191,7 +191,6 @@ static int ts209_powerled(int argc, const char **argv)
 		return -1;
 
 	return serial_write(&code, 1);
-	return 0;
 }
 
 static int ts209_statusled(int argc, const char **argv)
@@ -223,7 +222,6 @@ static int ts209_statusled(int argc, const char **argv)
 		return -1;
 
 	return serial_write(&code, 1);
-	return 0;
 }
 
 static int ts209_buzz(int argc, const char **argv)
@@ -241,7 +239,6 @@ static int ts209_buzz(int argc, const char **argv)
 		return -1;
 
 	return serial_write(&code, 1);
-	return 0;
 }
 
 static int ts209_fanspeed(int argc, const char **argv)
@@ -267,7 +264,6 @@ static int ts209_fanspeed(int argc, const char **argv)
 		return -1;
 
 	return serial_write(&code, 1);
-	return 0;
 }
 
 static int ts209_usbled(int argc, const char **argv)
@@ -287,7 +283,6 @@ static int ts209_usbled(int argc, const char **argv)
 		return -1;
 
 	return serial_write(&code, 1);
-	return 0;
 }
 
 static int ts209_autopower(int argc, const char **argv)
@@ -305,7 +300,6 @@ static int ts209_autopower(int argc, const char **argv)
 		return -1;
 
 	return serial_write(&code, 1);
-	return 0;
 }
 
 static int ts209_init(int argc, const char **argv UNUSED)
