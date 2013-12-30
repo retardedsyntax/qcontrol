@@ -40,7 +40,7 @@ static pthread_t a125_thread;
 static int a125_detected = 0;
 static unsigned int button_state = 0;
 
-static int serial_read(char *buf, int len)
+static int serial_read(unsigned char *buf, int len)
 {
 	int err, got = 0;
 	static int empty_count = 0;
@@ -90,7 +90,7 @@ static int serial_read(char *buf, int len)
 	return got;
 }
 
-static int serial_write(char *buf, int len)
+static int serial_write(unsigned char *buf, int len)
 {
 	int err;
 
@@ -101,7 +101,7 @@ static int serial_write(char *buf, int len)
 
 static int a125_read_serial_events(void)
 {
-	char buf[101];
+	unsigned char buf[101];
 	unsigned int state;
 	int err = serial_read(buf, 1);
 	if (err <= 0)
@@ -202,7 +202,7 @@ static int set_nonblock(int fd)
 
 static int serial_open(const char *device)
 {
-	char buf[2] = { 0x4D, 0x06 };
+	unsigned char buf[2] = { 0x4D, 0x06 };
 	int err;
 
 	serial = open(device , O_RDWR);
@@ -255,7 +255,7 @@ static void serial_close(void)
 
 static int a125_backlight(int argc, const char **argv)
 {
-	char code[3] = { 0x4D, 0x5E, 0x00 };
+	unsigned char code[3] = { 0x4D, 0x5E, 0x00 };
 
 	if (argc != 1)
 		return -1;
@@ -273,9 +273,9 @@ static int a125_backlight(int argc, const char **argv)
 static int a125_line(int id, const char *line)
 {
 	size_t l;
-	char code[20] = { 0x4D, 0x0C, 0x00, 0x10,
-			 ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-			 ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};
+	unsigned char code[20] = { 0x4D, 0x0C, 0x00, 0x10,
+				   ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+				   ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};
 
 	code[2] = id;
 
@@ -306,7 +306,7 @@ static int a125_line1(int argc, const char **argv)
 
 static int a125_reset(int argc, const char **argv UNUSED)
 {
-	char code[3] = { 0x4D, 0xFF };
+	unsigned char code[3] = { 0x4D, 0xFF };
 
 	if (argc != 0)
 		return -1;
@@ -316,7 +316,7 @@ static int a125_reset(int argc, const char **argv UNUSED)
 
 static int a125_clear(int argc, const char **argv UNUSED)
 {
-	char code[3] = { 0x4D, 0x0D };
+	unsigned char code[3] = { 0x4D, 0x0D };
 
 	if (argc != 0)
 		return -1;
