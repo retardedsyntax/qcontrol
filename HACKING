@@ -1,0 +1,45 @@
+Remote Protocol
+===============
+
+When run in daemon mode qcontrol listens on an AF_UNIX socket located at
+/var/run/qcontrol.sock. By default (without --direct) qcontrol will act as a
+client to this server.
+
+There are two basic data types:
+
+INTEGER:	An unsigned 32-bit value, in host byte order.
+
+STRING:		An INTEGER length (including the NUL terminator) followed by
+		exactly that number of bytes. The NUL is included.
+
+The protocol is initiated by the client. The client sends a request and then
+waits for a response. The request and response are expected to be packetized
+(that is, that read() will return ether a single complete message or nothing).
+
+Request:
+
+	C->S	INTEGER $argc (== n)
+	C->S	STRING $argv[0]
+	C->S	...
+	C->S	STRING $argv[n-1]
+
+	The request consists of a C style $argc+$argv[], that is an argument
+	count followed by the given number of strings.
+
+Response:
+
+	C<-S	INTEGER $result
+	C<-S	OPTIONAL STRING $message
+
+	The response consists of an INTEGER $result and an optional $message.
+
+	If $result < 0 then an error has occured and $message will be present
+	and contains the help string for the attempted command.
+
+	If $result == 0 then if the total length of the response is exactly
+	32-bits then this indicates success. If the length of the response is
+	longer than 32-bits then the remainder is a single STRING $message
+	containing a list of available commands.
+
+	Otherwise $result > 0 indicates success.
+
