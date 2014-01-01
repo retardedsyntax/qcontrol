@@ -1,6 +1,6 @@
 VERSION=0.5.3~pre
 
-CFLAGS   += -g -Os -Wall -Wextra
+CFLAGS   += -c -g -Os -Wall -Wextra
 CPPFLAGS += -DQCONTROL_VERSION=\"$(VERSION)\"
 
 LDFLAGS  += -g
@@ -28,7 +28,7 @@ $(EXECUTABLE): $(OBJECTS)
 $(EXECUTABLE)-static: $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS_STATIC) -o $@
 
-.cpp.o:
+.c.o:
 	$(CC) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 clean:
