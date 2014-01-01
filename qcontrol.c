@@ -296,28 +296,24 @@ int register_command(const char *cmd, const char *shorthelp, const char *help,
 	return 0;
 }
 
+static int shorthelp_fmt(char *buf, size_t size, struct piccommand *c)
+{
+	return snprintf(buf, size, "%-16s %s\n", c->name, c->shorthelp);
+}
+
 static void shorthelp_commands(char **buf, int *len)
 {
 	unsigned int i, off=0;
 
-	*len = 0;
+	*len = sizeof(int) + 1; /* Length field + NUL terminator */
 	for (i = 0; i < commandcount; ++i)
-		*len += strlen(commands[i]->shorthelp) + MAX_CMD_NAME
-		        + sizeof("\n") + sizeof(int);
+		*len += shorthelp_fmt(NULL, 0, commands[i]);
 
 	*buf = malloc(*len);
 	memset(*buf, 0, sizeof(int));
-	off += sizeof(int);
-	for (i = 0; i < commandcount; ++i) {
-		strncpy(*buf+off, commands[i]->name, MAX_CMD_NAME);
-		off += strlen(commands[i]->name);
-		memset(*buf+off, ' ', MAX_CMD_NAME - strlen(commands[i]->name));
-		off += MAX_CMD_NAME - strlen(commands[i]->name);
-		strncpy(*buf+off, commands[i]->shorthelp, *len-off);
-		off += strlen(commands[i]->shorthelp);
-		strncpy(*buf+off, "\n", *len-off);
-		off += strlen("\n");
-	}
+	off += sizeof(int); /* Skip length */
+	for (i = 0; i < commandcount; ++i)
+		off += shorthelp_fmt(*buf+off, *len-off, commands[i]);
 }
 
 static int run_command(const char *cmd, int argc, const char **argv)
