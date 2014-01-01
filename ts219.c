@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2007-2008  Byron Bradley (byron.bbradley@gmail.com)
  * Copyright (C) 2008, 2009  Martin Michlmayr (tbm@cyrius.com)
- * Copyright (C) 2013 Michael Stapelberg (michael+qnap@stapelberg.de)
+ * Copyright (C) 2013  Michael Stapelberg (michael+qnap@stapelberg.de)
+ * Copyright (C) 2013  Ian Campbell (ijc@hellion.org.uk)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
