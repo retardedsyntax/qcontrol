@@ -16,7 +16,7 @@ CFLAGS   += $(shell pkg-config --cflags libsystemd-daemon)
 LIBS     += $(shell pkg-config --libs libsystemd-daemon)
 endif
 
-SOURCES=qcontrol.c system.c ts209.c ts219.c ts409.c ts41x.c evdev.c a125.c
+SOURCES=qcontrol.c system.c qnap-pic.c ts209.c ts219.c ts409.c ts41x.c evdev.c a125.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=qcontrol
 

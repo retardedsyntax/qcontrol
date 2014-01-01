@@ -18,60 +18,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <errno.h>
-#include <fcntl.h>
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
-#include <termios.h>
-#include <unistd.h>
 #include <linux/input.h>
 
 #include "picmodule.h"
 #include "qnap-pic.h"
 
-static int serial;
-static struct termios oldtio, newtio;
-static pthread_t ts219_thread;
-
-static int serial_read(unsigned char *buf, int len)
-{
-	int err;
-	static int error_count = 0;
-
-	err = read(serial, buf, len);
-	if (err != -1) {
-		buf[err] = 0;
-		error_count = 0;
-	} else if (errno == EAGAIN) {
-		error_count++;
-		if (error_count == 5)
-			print_log(LOG_WARNING,
-"Contradicting information about data available to be read from /dev/ttyS1.\n"
-"Please make sure nothing else is reading things there.");
-	}
-
-	return err;
-}
-
-static int serial_write(unsigned char *buf, int len)
-{
-	int err;
-
-	err = write(serial, buf, len);
-
-	return err;
-}
-
 static int ts219_read_serial_events(void)
 {
 	unsigned char buf[100];
-	int err = serial_read(buf, 100);
+	int err = qnap_serial_read(buf, 100);
 	if (err < 0)
 		return err;
 	switch (buf[0]) {
@@ -110,78 +70,6 @@ static int ts219_read_serial_events(void)
 	return -1;
 }
 
-static void *serial_poll(void *tmp UNUSED)
-{
-	int err;
-	fd_set rset;
-
-	FD_ZERO(&rset);
-	FD_SET(serial, &rset);
-
-	for (;;) {
-		err = select(serial + 1, &rset, NULL, NULL, NULL);
-		if (err <= 0) {
-			FD_SET(serial, &rset);
-			continue;
-		}
-		ts219_read_serial_events();
-		FD_SET(serial, &rset);
-	}
-
-	return NULL;
-}
-
-static int set_nonblock(int fd)
-{
-	int flags = fcntl(fd, F_GETFL, 0);
-	if (flags < 0)
-		flags = 0;
-	return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-}
-
-static int serial_open(char *device)
-{
-	int err;
-
-	if ((serial = open(device , O_RDWR)) < 0) {
-		print_log(LOG_ERR, "Failed to open %s: %s", device,
-			  strerror(errno));
-		return -1;
-	}
-	err = set_nonblock(serial);
-	if (err < 0) {
-		print_log(LOG_ERR, "Error setting nonblock: %s",
-		          strerror(errno));
-		return -1;
-	}
-
-	tcgetattr(serial, &oldtio);
-	memset(&newtio, 0, sizeof(newtio));
-
-	newtio.c_iflag |= IGNBRK;
-	newtio.c_lflag &= ~(ISIG | ICANON | ECHO);
-	newtio.c_cflag = B19200 | CS8 | CLOCAL | CREAD;
-	newtio.c_cc[VMIN] = 1;
-	newtio.c_cc[VTIME] = 0;
-	cfsetospeed(&newtio, B19200);
-	cfsetispeed(&newtio, B19200);
-
-	err = tcsetattr(serial, TCSANOW, &newtio);
-	if (err < 0) {
-		print_log(LOG_ERR, "Failed to set attributes for %s: %s",
-		          device, strerror(errno));
-		return -1;
-	}
-
-	return 0;
-}
-
-static void serial_close(void)
-{
-	tcsetattr(serial, TCSANOW, &oldtio);
-	close(serial);
-}
-
 static int ts219_powerled(int argc, const char **argv)
 {
 	unsigned char code = 0;
@@ -200,7 +88,7 @@ static int ts219_powerled(int argc, const char **argv)
 	else
 		return -1;
 
-	return serial_write(&code, 1);
+	return qnap_serial_write(&code, 1);
 }
 
 static int ts219_statusled(int argc, const char **argv)
@@ -231,7 +119,7 @@ static int ts219_statusled(int argc, const char **argv)
 	else
 		return -1;
 
-	return serial_write(&code, 1);
+	return qnap_serial_write(&code, 1);
 }
 
 static int ts219_buzz(int argc, const char **argv)
@@ -248,7 +136,7 @@ static int ts219_buzz(int argc, const char **argv)
 	else
 		return -1;
 
-	return serial_write(&code, 1);
+	return qnap_serial_write(&code, 1);
 }
 
 static int ts219_fanspeed(int argc, const char **argv)
@@ -273,7 +161,7 @@ static int ts219_fanspeed(int argc, const char **argv)
 	else
 		return -1;
 
-	return serial_write(&code, 1);
+	return qnap_serial_write(&code, 1);
 }
 
 static int ts219_usbled(int argc, const char **argv)
@@ -292,7 +180,7 @@ static int ts219_usbled(int argc, const char **argv)
 	else
 		return -1;
 
-	return serial_write(&code, 1);
+	return qnap_serial_write(&code, 1);
 }
 
 static int ts219_autopower(int argc, const char **argv)
@@ -309,7 +197,7 @@ static int ts219_autopower(int argc, const char **argv)
 	else
 		return -1;
 
-	return serial_write(&code, 1);
+	return qnap_serial_write(&code, 1);
 }
 
 static int ts219_wdt(int argc, const char **argv)
@@ -323,7 +211,7 @@ static int ts219_wdt(int argc, const char **argv)
 	else
 		return -1;
 
-	return serial_write(&code, 1);
+	return qnap_serial_write(&code, 1);
 }
 
 static int ts219_eup(int argc, const char **argv)
@@ -340,7 +228,7 @@ static int ts219_eup(int argc, const char **argv)
 	else
 		return -1;
 
-	return serial_write(&code, 1);
+	return qnap_serial_write(&code, 1);
 }
 
 static int ts219_wol(int argc, const char **argv)
@@ -364,7 +252,7 @@ static int ts219_wol(int argc, const char **argv)
 	} else
 		return -1;
 
-	return serial_write(code, len);
+	return qnap_serial_write(code, len);
 }
 
 static int ts219_init(int argc, const char **argv UNUSED)
@@ -376,7 +264,7 @@ static int ts219_init(int argc, const char **argv UNUSED)
 		return -1;
 	}
 
-	err = serial_open("/dev/ttyS1");
+	err = qnap_serial_open("/dev/ttyS1");
 	if (err < 0)
 		return err;
 
@@ -428,12 +316,12 @@ static int ts219_init(int argc, const char **argv UNUSED)
 	                       "\ton\n\toff",
 	                       ts219_eup);
 
-	return pthread_create(&ts219_thread, NULL, serial_poll, NULL);
+	return qnap_serial_poll(&ts219_read_serial_events);
 }
 
 static void ts219_exit(void)
 {
-	serial_close();
+	qnap_serial_close();
 }
 
 struct picmodule ts219_module = {

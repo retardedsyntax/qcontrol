@@ -18,6 +18,14 @@
 #ifndef QNAP_PIC_H
 #define QNAP_PIC_H
 
+typedef int (*qnap_serial_cb)(void);
+
+void qnap_serial_close(void);
+int qnap_serial_open(char *device);
+int qnap_serial_poll(qnap_serial_cb cb);
+int qnap_serial_write(unsigned char *buf, int len);
+int qnap_serial_read(unsigned char *buf, int len);
+
 /*
  * QNAP_PICCMD_* -- Command codes sent to PIC
  * QNAP_PICSTS_* -- Status codes received from PIC
