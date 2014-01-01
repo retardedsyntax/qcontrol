@@ -32,6 +32,7 @@
 #include <linux/input.h>
 
 #include "picmodule.h"
+#include "qnap-pic.h"
 
 static int serial;
 static struct termios oldtio, newtio;
@@ -73,24 +74,24 @@ static int ts209_read_serial_events(void)
 	if (err < 0)
 		return err;
 	switch (buf[0]) {
-	case 0x40:
+	case QNAP_PICSTS_POWER_BUTTON:
 		call_function("power_button", "%d", 3);
 		break;
-	case 0x43:
+	case QNAP_PICSTS_POWER_LOSS_POWER_OFF:
 		/* RTC Wake-Up (ignored) */
 		break;
-	case 0x73:
+	case QNAP_PICSTS_FAN1_ERROR:
 		call_function("fan_error", "");
 		break;
-	case 0x74:
+	case QNAP_PICSTS_FAN1_NORMAL:
 		call_function("fan_normal", "");
 		break;
-	case 0x3a:
-	case 0x3c:
+	case QNAP_PICSTS_TEMP_WARM_TO_HOT:
+	case QNAP_PICSTS_TEMP_COLD_TO_WARM:
 		call_function("temp_low", "");
 		break;
-	case 0x3b:
-	case 0x3d:
+	case QNAP_PICSTS_TEMP_HOT_TO_WARM:
+	case QNAP_PICSTS_TEMP_WARM_TO_COLD:
 		call_function("temp_high", "");
 		break;
 	default:
@@ -181,13 +182,13 @@ static int ts209_powerled(int argc, const char **argv)
 		return -1;
 
 	if (strcmp(argv[0], "on") == 0)
-		code = 0x4d;
+		code = QNAP_PICCMD_POWER_LED_ON;
 	else if (strcmp(argv[0], "1hz") == 0)
-		code = 0x4e;
+		code = QNAP_PICCMD_POWER_LED_1HZ;
 	else if (strcmp(argv[0], "2hz") == 0)
-		code = 0x4c;
+		code = QNAP_PICCMD_POWER_LED_2HZ;
 	else if (strcmp(argv[0], "off") == 0)
-		code = 0x4b;
+		code = QNAP_PICCMD_POWER_LED_OFF;
 	else
 		return -1;
 
@@ -202,23 +203,23 @@ static int ts209_statusled(int argc, const char **argv)
 		return -1;
 
 	if (strcmp(argv[0], "red2hz") == 0)
-		code = 0x54;
+		code = QNAP_PICCMD_STATUS_RED_2HZ;
 	else if (strcmp(argv[0], "green2hz") == 0)
-		code = 0x55;
+		code = QNAP_PICCMD_STATUS_GREEN_2HZ;
 	else if (strcmp(argv[0], "greenon") == 0)
-		code = 0x56;
+		code = QNAP_PICCMD_STATUS_GREEN_ON;
 	else if (strcmp(argv[0], "redon") == 0)
-		code = 0x57;
+		code = QNAP_PICCMD_STATUS_RED_ON;
 	else if (strcmp(argv[0], "greenred2hz") == 0)
-		code = 0x58;
+		code = QNAP_PICCMD_STATUS_BOTH_2HZ;
 	else if (strcmp(argv[0], "off") == 0)
-		code = 0x59;
+		code = QNAP_PICCMD_STATUS_OFF;
 	else if (strcmp(argv[0], "green1hz") == 0)
-		code = 0x5a;
+		code = QNAP_PICCMD_STATUS_GREEN_1HZ;
 	else if (strcmp(argv[0], "red1hz") == 0)
-		code = 0x5b;
+		code = QNAP_PICCMD_STATUS_RED_1HZ;
 	else if (strcmp(argv[0], "greenred1hz") == 0)
-		code = 0x5c;
+		code = QNAP_PICCMD_STATUS_BOTH_1HZ;
 	else
 		return -1;
 
@@ -233,9 +234,9 @@ static int ts209_buzz(int argc, const char **argv)
 		return -1;
 
 	if (strcmp(argv[0], "short") == 0)
-		code = 0x50;
+		code = QNAP_PICCMD_BUZZER_SHORT;
 	else if (strcmp(argv[0], "long") == 0)
-		code = 0x51;
+		code = QNAP_PICCMD_BUZZER_LONG;
 	else
 		return -1;
 
@@ -250,17 +251,17 @@ static int ts209_fanspeed(int argc, const char **argv)
 		return -1;
 
 	if (strcmp(argv[0], "stop") == 0)
-		code = 0x30;
+		code = QNAP_PICCMD_FAN_STOP;
 	else if (strcmp(argv[0], "silence") == 0)
-		code = 0x31;
+		code = QNAP_PICCMD_FAN_SILENCE;
 	else if (strcmp(argv[0], "low") == 0)
-		code = 0x32;
+		code = QNAP_PICCMD_FAN_LOW;
 	else if (strcmp(argv[0], "medium") == 0)
-		code = 0x33;
+		code = QNAP_PICCMD_FAN_MEDIUM;
 	else if (strcmp(argv[0], "high") == 0)
-		code = 0x34;
+		code = QNAP_PICCMD_FAN_HIGH;
 	else if (strcmp(argv[0], "full") == 0)
-		code = 0x35;
+		code = QNAP_PICCMD_FAN_FULL;
 	else
 		return -1;
 
@@ -275,11 +276,11 @@ static int ts209_usbled(int argc, const char **argv)
 		return -1;
 
 	if (strcmp(argv[0], "on") == 0)
-		code = 0x60;
+		code = QNAP_PICCMD_USB_LED_ON;
 	else if (strcmp(argv[0], "8hz") == 0)
-		code = 0x61;
+		code = QNAP_PICCMD_USB_LED_8HZ;
 	else if (strcmp(argv[0], "off") == 0)
-		code = 0x62;
+		code = QNAP_PICCMD_USB_LED_OFF;
 	else
 		return -1;
 
@@ -294,9 +295,9 @@ static int ts209_autopower(int argc, const char **argv)
 		return -1;
 
 	if (strcmp(argv[0], "on") == 0)
-		code = 0x48;
+		code = QNAP_PICCMD_AUTOPOWER_ON;
 	else if (strcmp(argv[0], "off") == 0)
-		code = 0x49;
+		code = QNAP_PICCMD_AUTOPOWER_OFF;
 	else
 		return -1;
 
