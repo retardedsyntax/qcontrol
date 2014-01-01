@@ -314,16 +314,16 @@ static int ts219_autopower(int argc, const char **argv)
 
 static int ts219_wdt(int argc, const char **argv)
 {
-        unsigned char code = 0;
+	unsigned char code = 0;
 
-        if (argc != 1)
-                return -1;
-        if (strcmp(argv[0], "off") == 0)
-                code = QNAP_PICCMD_WDT_OFF;
-        else
-                return -1;
+	if (argc != 1)
+		return -1;
+	if (strcmp(argv[0], "off") == 0)
+		code = QNAP_PICCMD_WDT_OFF;
+	else
+		return -1;
 
-        return serial_write(&code, 1);
+	return serial_write(&code, 1);
 }
 
 static int ts219_eup(int argc, const char **argv)
