@@ -2,6 +2,8 @@ VERSION=0.5.3~pre
 
 CFLAGS   += -g -Os -Wall -Wextra
 CPPFLAGS += -DQCONTROL_VERSION=\"$(VERSION)\"
+
+LDFLAGS  += -g
 LIBS     += -lpthread
 LIBS_STATIC += /usr/lib/liblua5.1.a -lpthread -lm -ldl
 
@@ -21,10 +23,10 @@ EXECUTABLE=qcontrol
 all:	$(SOURCES) $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
+	$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
 
 $(EXECUTABLE)-static: $(OBJECTS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBS_STATIC) -o $@
+	$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS_STATIC) -o $@
 
 .cpp.o:
 	$(CC) $(CPPFLAGS) $(CFLAGS) $< -o $@
