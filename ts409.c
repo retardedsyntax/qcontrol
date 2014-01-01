@@ -103,7 +103,7 @@ static int ts409_read_serial_events(void)
 		break;
 	default:
 		print_log(LOG_WARNING, "(PIC 0x%x) unknown command from PIC",
-		          buf[0]);
+			  buf[0]);
 	}
 
 	return -1;
@@ -143,8 +143,8 @@ static int serial_open(char *device)
 	int err;
 
 	if ((serial = open(device , O_RDWR)) < 0) {
-		print_log(LOG_ERR, "Failed to open %s: %s",
-		          device, strerror(errno));
+		print_log(LOG_ERR, "Failed to open %s: %s", device,
+			  strerror(errno));
 		return -1;
 	}
 	err = set_nonblock(serial);

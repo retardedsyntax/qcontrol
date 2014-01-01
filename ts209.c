@@ -96,7 +96,7 @@ static int ts209_read_serial_events(void)
 		break;
 	default:
 		print_log(LOG_WARNING, "(PIC 0x%x) unknown command from PIC",
-		          buf[0]);
+			  buf[0]);
 	}
 
 	return -1;
@@ -136,13 +136,13 @@ static int serial_open(char *device)
 	int err;
 
 	if ((serial = open(device , O_RDWR)) < 0) {
-		print_log(LOG_ERR, "ts209: Failed to open %s: %s",
-		          device, strerror(errno));
+		print_log(LOG_ERR, "Failed to open %s: %s", device,
+			  strerror(errno));
 		return -1;
 	}
 	err = set_nonblock(serial);
 	if (err < 0) {
-		print_log(LOG_ERR, "ts209: Error setting nonblock: %s",
+		print_log(LOG_ERR, "Error setting nonblock: %s",
 		          strerror(errno));
 		return -1;
 	}
@@ -160,7 +160,7 @@ static int serial_open(char *device)
 
 	err = tcsetattr(serial, TCSANOW, &newtio);
 	if (err < 0) {
-		print_log(LOG_ERR, "ts209: Failed to set attributes for %s: %s",
+		print_log(LOG_ERR, "Failed to set attributes for %s: %s",
 		          device, strerror(errno));
 		return -1;
 	}
@@ -309,7 +309,7 @@ static int ts209_init(int argc, const char **argv UNUSED)
 	int err;
 
 	if (argc > 0) {
-		print_log(LOG_ERR, "ts209: module takes no arguments\n");
+		print_log(LOG_ERR, "ts209: module takes no arguments");
 		return -1;
 	}
 

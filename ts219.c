@@ -103,8 +103,8 @@ static int ts219_read_serial_events(void)
 		call_function("temp", "%d", 80);
 		break;
 	default:
-		print_log(LOG_ERR, "(PIC 0x%x) unknown command from PIC\n",
-                          buf[0]);
+		print_log(LOG_WARNING, "(PIC 0x%x) unknown command from PIC",
+			  buf[0]);
 	}
 
 	return -1;
@@ -145,12 +145,13 @@ static int serial_open(char *device)
 
 	if ((serial = open(device , O_RDWR)) < 0) {
 		print_log(LOG_ERR, "Failed to open %s: %s", device,
-		          strerror(errno));
+			  strerror(errno));
 		return -1;
 	}
 	err = set_nonblock(serial);
 	if (err < 0) {
-		print_log(LOG_ERR, "Error setting nonblock");
+		print_log(LOG_ERR, "Error setting nonblock: %s",
+		          strerror(errno));
 		return -1;
 	}
 
@@ -371,8 +372,7 @@ static int ts219_init(int argc, const char **argv UNUSED)
 	int err;
 
 	if (argc > 0) {
-		print_log(LOG_ERR, "%s: module does not take any arguments\n",
-		          __func__);
+		print_log(LOG_ERR, "ts219: module takes no arguments");
 		return -1;
 	}
 
