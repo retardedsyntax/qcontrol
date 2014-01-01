@@ -480,6 +480,7 @@ static int network_send(int argc, const char **argv)
 	}
 
 	send(sock, buf, off, 0);
+	free(buf);
 	rlen = read(sock, retbuf, MAX_NET_BUF);
 	if (rlen < 0) {
 		print_log(LOG_ERR, "Error during read: %s", strerror(errno));
