@@ -28,6 +28,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <getopt.h>
 #include <glob.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -58,13 +59,15 @@ char *usage = "Usage: qcontrol [OPTION...] [command] [args...]\n"
               "PIC Controller\n\n"
               "  -d, --daemon               Run the server as a daemon\n"
               "  -f, --foreground           Run the server in the foreground\n"
-              "  -?, --help                 Give this help list\n"
+              "      --direct               Run commands directly\n"
+              "  -c, --config=PATH          Use PATH as config file\n"
+              "      --help                 Give this help list\n"
               "  -V, --version              Print program version\n\n"
               "Mandatory or optional arguments to long options are also "
               "mandatory or optional\nfor any corresponding short options.\n";
 static const char *configfilename = "/etc/qcontrol.conf";
 static lua_State *lua = NULL;
-unsigned int commandcount;
+unsigned int commandcount = 0;
 struct piccommand **commands;
 
 extern struct picmodule system_module;
@@ -314,6 +317,16 @@ static void shorthelp_commands(char **buf, int *len)
 	off += sizeof(int); /* Skip length */
 	for (i = 0; i < commandcount; ++i)
 		off += shorthelp_fmt(*buf+off, *len-off, commands[i]);
+}
+
+static void shorthelp_commands_direct(void)
+{
+	char *buf = NULL;
+	int offs = 0;
+
+	shorthelp_commands(&buf, &offs);
+	printf("\nAvailable commands are:\n%s", buf+sizeof(int));
+	free(buf);
 }
 
 static int run_command(const char *cmd, int argc, const char **argv)
@@ -676,42 +689,79 @@ static int start_daemon(bool daemon_mode)
 	return err;
 }
 
-int main(int argc, const char *argv[])
+int main(int argc, char **argv)
 {
-	const char *help = "--help";
-	commandcount = 0;
+	const char *help_arg = "--help";
+	enum {
+		MODE_SERVER_DAEMON,
+		MODE_SERVER_FOREGROUND,
+		MODE_CLIENT,
+		MODE_DIRECT,
+	} mode = MODE_CLIENT;
+	bool help = false;
 
-	if (argc > 1 && (strcmp(argv[1], "-c") == 0)) {
-		configfilename = argv[2];
-		argc -= 2;
-		argv += 2;
+	while (1) {
+		struct option long_options[] = {
+			{"config",      required_argument, 0, 'c' },
+			{"daemon",      no_argument,       0, 'd' },
+			{"foreground",  no_argument,       0, 'f' },
+			{"direct",      no_argument,       0, 1  },
+			{"help",        no_argument,       0, 'h' },
+			{"version",     no_argument,       0, 'V' },
+			{0, 0, 0, 0}
+		};
+
+		int opt = getopt_long(argc, argv, "c:dfhv",
+				      long_options, NULL);
+
+		if (opt == -1)
+			break;
+
+		switch (opt) {
+		case 1:   mode = MODE_DIRECT;            break;
+		case 'c': configfilename = optarg;       break;
+		case 'd': mode = MODE_SERVER_DAEMON;     break;
+		case 'f': mode = MODE_SERVER_FOREGROUND; break;
+		case 'h': help = 1;                      break;
+		case 'V': printf("%s", version);         return 0;
+		case '?':                                break;
+		}
+
 	}
 
-	if (argc > 1 && (strcmp(argv[1], "--help") == 0
-	              || strcmp(argv[1], "-?") == 0)) {
-		printf("%s", usage);
-		return network_send(argc - 1, argv + 1);
-	} else if (argc > 1 && (strcmp(argv[1], "-V") == 0
-	                     || strcmp(argv[1], "--version") == 0)) {
-		printf("%s", version);
-		return 0;
-	} else if (argc > 1 && (strcmp(argv[1], "-d") == 0
-                                || strcmp(argv[1], "--daemon") == 0)) {
-		return start_daemon(true);
-	} else if (argc > 1 && (strcmp(argv[1], "-f") == 0
-                                || strcmp(argv[1], "--foreground") == 0)) {
-		return start_daemon(false);
-	} else if (argc > 2 && strcmp(argv[1], "--direct") == 0) {
-		/* Execute a single command and terminate */
-		pic_lua_setup(&lua);
-		return run_command_direct(argv[2], argc - 3, argv + 3);
-	} else if (argc > 1) {
+	argc -= optind;
+	argv += optind;
+
+	switch (mode) {
+	case MODE_SERVER_DAEMON:
+	case MODE_SERVER_FOREGROUND:
+		if (help) {
+			printf("%s", usage);
+			return 0;
+		} else {
+			return start_daemon(mode == MODE_SERVER_DAEMON);
+		}
+
+	case MODE_CLIENT:
 		/* Send the command to the server */
-		return network_send(argc - 1, argv + 1);
-	} else {
-		printf("%s", usage);
-		return network_send(1, &help);
+		if (help || argc == 0) {
+			printf("%s", usage);
+			return network_send(1, &help_arg);
+		} else {
+			return network_send(argc, (const char **)argv);
+		}
+
+	case MODE_DIRECT:
+		pic_lua_setup(&lua);
+		if (help || argc == 0) {
+			printf("%s", usage);
+			shorthelp_commands_direct();
+			return 0;
+		} else {
+			/* Execute a single command and terminate */
+			return run_command_direct(argv[0], argc - 1, (const char **)(argv + 1));
+		}
 	}
 
-	return -1;
+	abort(); /* Not reached */
 }
