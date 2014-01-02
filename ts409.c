@@ -69,115 +69,6 @@ static int ts409_read_serial_events(void)
 	return -1;
 }
 
-static int ts409_statusled(int argc, const char **argv)
-{
-	unsigned char code = 0;
-
-	if (argc != 1)
-		return -1;
-
-	if (strcmp(argv[0], "red2hz") == 0)
-		code = QNAP_PICCMD_STATUS_RED_2HZ;
-	else if (strcmp(argv[0], "green2hz") == 0)
-		code = QNAP_PICCMD_STATUS_GREEN_2HZ;
-	else if (strcmp(argv[0], "greenon") == 0)
-		code = QNAP_PICCMD_STATUS_GREEN_ON;
-	else if (strcmp(argv[0], "redon") == 0)
-		code = QNAP_PICCMD_STATUS_RED_ON;
-	else if (strcmp(argv[0], "greenred2hz") == 0)
-		code = QNAP_PICCMD_STATUS_BOTH_2HZ;
-	else if (strcmp(argv[0], "off") == 0)
-		code = QNAP_PICCMD_STATUS_OFF;
-	else if (strcmp(argv[0], "green1hz") == 0)
-		code = QNAP_PICCMD_STATUS_GREEN_1HZ;
-	else if (strcmp(argv[0], "red1hz") == 0)
-		code = QNAP_PICCMD_STATUS_RED_1HZ;
-	else if (strcmp(argv[0], "greenred1hz") == 0)
-		code = QNAP_PICCMD_STATUS_BOTH_1HZ;
-	else
-		return -1;
-
-	return qnap_serial_write(&code, 1);
-}
-
-static int ts409_buzz(int argc, const char **argv)
-{
-	unsigned char code = 0;
-
-	if (argc != 1)
-		return -1;
-
-	if (strcmp(argv[0], "short") == 0)
-		code = QNAP_PICCMD_BUZZER_SHORT;
-	else if (strcmp(argv[0], "long") == 0)
-		code = QNAP_PICCMD_BUZZER_LONG;
-	else
-		return -1;
-
-	return qnap_serial_write(&code, 1);
-}
-
-static int ts409_fanspeed(int argc, const char **argv)
-{
-	unsigned char code = 0;
-
-	if (argc != 1)
-		return -1;
-
-	if (strcmp(argv[0], "stop") == 0)
-		code = QNAP_PICCMD_FAN_STOP;
-	else if (strcmp(argv[0], "silence") == 0)
-		code = QNAP_PICCMD_FAN_SILENCE;
-	else if (strcmp(argv[0], "low") == 0)
-		code = QNAP_PICCMD_FAN_LOW;
-	else if (strcmp(argv[0], "medium") == 0)
-		code = QNAP_PICCMD_FAN_MEDIUM;
-	else if (strcmp(argv[0], "high") == 0)
-		code = QNAP_PICCMD_FAN_HIGH;
-	else if (strcmp(argv[0], "full") == 0)
-		code = QNAP_PICCMD_FAN_FULL;
-	else
-		return -1;
-
-	return qnap_serial_write(&code, 1);
-}
-
-static int ts409_usbled(int argc, const char **argv)
-{
-	unsigned char code = 0;
-
-	if (argc != 1)
-		return -1;
-
-	if (strcmp(argv[0], "on") == 0)
-		code = QNAP_PICCMD_USB_LED_ON;
-	else if (strcmp(argv[0], "8hz") == 0)
-		code = QNAP_PICCMD_USB_LED_8HZ;
-	else if (strcmp(argv[0], "off") == 0)
-		code = QNAP_PICCMD_USB_LED_OFF;
-	else
-		return -1;
-
-	return qnap_serial_write(&code, 1);
-}
-
-static int ts409_autopower(int argc, const char **argv)
-{
-	unsigned char code = 0;
-
-	if (argc != 1)
-		return -1;
-
-	if (strcmp(argv[0], "on") == 0)
-		code = QNAP_PICCMD_AUTOPOWER_ON;
-	else if (strcmp(argv[0], "off") == 0)
-		code = QNAP_PICCMD_AUTOPOWER_OFF;
-	else
-		return -1;
-
-	return qnap_serial_write(&code, 1);
-}
-
 static int ts409_init(int argc, const char **argv UNUSED)
 {
 	int err;
@@ -191,33 +82,13 @@ static int ts409_init(int argc, const char **argv UNUSED)
 	if (err < 0)
 		return err;
 
-	err = register_command("statusled",
-	                       "Change the status LED",
-	                       "Change the status LED, options are:\n"
-	                       "\tred2hz\n\tgreen2hz\n\tgreenon\n\tredon\n"
-	                       "\tgreenred2hz\n\toff\n\tgreen1hz\n\tred1hz\n",
-	                       ts409_statusled);
-	err = register_command("buzzer",
-	                       "Buzz",
-	                       "Buzz, options are:\n"
-	                       "\tshort\n\tlong\n",
-	                       ts409_buzz);
-	err = register_command("fanspeed",
-	                       "Set the fanspeed",
-	                       "Set the fanspeed, options are:\n"
-	                       "\tstop\n\tsilence\n\tlow\n\tmedium\n"
-	                       "\thigh\n\tfull\n",
-	                       ts409_fanspeed);
-	err = register_command("usbled",
-	                       "Set the usbled",
-	                       "Set the usbled, options are:\n"
-	                       "\ton\n\t8hz\n\toff\n",
-	                       ts409_usbled);
-	err = register_command("autopower",
-	                       "Control the automatic power mechanism",
-	                       "Control the automatic power mechanism, options are:\n"
-	                       "\ton\n\toff\n",
-	                       ts409_autopower);
+	err = qnap_register_commands(QNAP_PIC_FEATURE_STATUSLED|
+				     QNAP_PIC_FEATURE_USBLED|
+				     QNAP_PIC_FEATURE_AUTOPOWER|
+				     QNAP_PIC_FEATURE_BUZZER|
+				     QNAP_PIC_FEATURE_FANSPEED);
+	if (err < 0)
+		return err;
 
 	return qnap_serial_poll(&ts409_read_serial_events);
 }

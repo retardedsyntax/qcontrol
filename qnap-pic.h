@@ -26,6 +26,24 @@ int qnap_serial_poll(qnap_serial_cb cb);
 int qnap_serial_write(unsigned char *buf, int len);
 int qnap_serial_read(unsigned char *buf, int len);
 
+enum {
+	QNAP_PIC_FEATURE_AUTOPOWER	= (1U<<0),
+
+	QNAP_PIC_FEATURE_BUZZER		= (1U<<1),
+
+	QNAP_PIC_FEATURE_FANSPEED	= (1U<<2),
+	QNAP_PIC_FEATURE_POWERLED	= (1U<<3),
+	QNAP_PIC_FEATURE_STATUSLED	= (1U<<4),
+	QNAP_PIC_FEATURE_USBLED		= (1U<<5),
+
+	QNAP_PIC_FEATURE_WATCHDOG	= (1U<<6),
+
+	QNAP_PIC_FEATURE_EUP		= (1U<<7),
+	QNAP_PIC_FEATURE_WOL		= (1U<<8),
+};
+
+int qnap_register_commands(unsigned long features);
+
 /*
  * QNAP_PICCMD_* -- Command codes sent to PIC
  * QNAP_PICSTS_* -- Status codes received from PIC
