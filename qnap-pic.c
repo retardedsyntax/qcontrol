@@ -303,6 +303,23 @@ static int qnap_cmd_eup(int argc, const char **argv)
 	return qnap_serial_write(&code, 1);
 }
 
+static int qnap_cmd_rtc(int argc, const char **argv)
+{
+	unsigned char code = 0;
+
+	if (argc != 1)
+		return -1;
+
+	if (strcmp(argv[0], "on") == 0)
+		code = QNAP_PICCMD_RTC_ENABLE;
+	else if (strcmp(argv[0], "off") == 0)
+		code = QNAP_PICCMD_RTC_DISABLE;
+	else
+		return -1;
+
+	return qnap_serial_write(&code, 1);
+}
+
 static int qnap_cmd_wol(int argc, const char **argv)
 {
 	unsigned char code[2];
@@ -365,6 +382,9 @@ int qnap_register_commands(unsigned long features)
 		  "\ton\n\toff");
 	REGISTER1(EUP, eup, "Control EUP (Energy-using Products) power saving",
 		  "Control EUP, options are:\n"
+		  "\ton\n\toff");
+	REGISTER1(RTC, rtc, "Control RTC (real time clock)",
+		  "Control RTC, options are:\n"
 		  "\ton\n\toff");
 
 #undef REGISTER1

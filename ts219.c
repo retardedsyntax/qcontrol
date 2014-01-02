@@ -91,7 +91,8 @@ static int ts219_init(int argc, const char **argv UNUSED)
 				     QNAP_PIC_FEATURE_FANSPEED|
 				     QNAP_PIC_FEATURE_WATCHDOG|
 				     QNAP_PIC_FEATURE_WOL|
-				     QNAP_PIC_FEATURE_EUP);
+				     QNAP_PIC_FEATURE_EUP|
+				     QNAP_PIC_FEATURE_RTC);
 	if (err < 0)
 		return err;
 

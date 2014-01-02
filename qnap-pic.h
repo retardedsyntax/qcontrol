@@ -40,6 +40,7 @@ enum {
 
 	QNAP_PIC_FEATURE_EUP		= (1U<<7),
 	QNAP_PIC_FEATURE_WOL		= (1U<<8),
+	QNAP_PIC_FEATURE_RTC		= (1U<<9),
 };
 
 int qnap_register_commands(unsigned long features);
@@ -104,6 +105,8 @@ int qnap_register_commands(unsigned long features);
 #define QNAP_PICSTS_SYS_TEMP_0			0x80
 #define QNAP_PICSTS_SYS_TEMP_70			0xc6
 
+#define QNAP_PICCMD_RTC_ENABLE			0xf0
+#define QNAP_PICCMD_RTC_DISABLE			0xf1
 #define QNAP_PICCMD_WOL_ENABLE			0xf2
 #define QNAP_PICCMD_WOL_DISABLE			0xf3
 #define QNAP_PICCMD_EUP_DISABLE			0xf4
