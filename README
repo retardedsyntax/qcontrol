@@ -5,4 +5,5 @@ Supported devices:
  - QNAP TS-409 and TS-409U (ts409)
  - QNAP TS-110, TS-119, TS-210, TS-219 and TS-219P (ts219)
  - QNAP TS-410, TS-410U, TS-419P and TS-419U (ts41x)
+ - Synology Diskstation and Rackstation (synology)
 
