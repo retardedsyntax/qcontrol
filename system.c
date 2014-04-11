@@ -20,7 +20,7 @@
 
 static int system_status(int argc, const char **argv)
 {
-	if (argc != 0)
+	if (argc != 1)
 		return -1;
 	
 	call_function("system_status", "%s", argv[0]);
