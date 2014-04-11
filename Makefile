@@ -1,4 +1,4 @@
-VERSION=0.5.3~pre
+VERSION=0.5.3
 
 CFLAGS   += -c -g -Os -Wall -Wextra
 CPPFLAGS += -DQCONTROL_VERSION=\"$(VERSION)\"
