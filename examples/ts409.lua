@@ -7,9 +7,31 @@ register("ts409")
 
 -- Requires CONFIG_KEYBOARD_GPIO enabled in the kernel and
 -- the kernel module gpio_keys to be loaded.
-register("evdev", "/dev/input/by-path/platform-gpio-keys-event",
-	408, "restart_button",
-	133, "media_button")
+
+-- Different kernel versions use platform-gpio_keys-event or
+-- platform-gpio-keys-event, find the right one.
+
+function find_device( options )
+	for index,option in ipairs(options) do
+		local f=io.open(option)
+		if f then
+			f:close()
+			return option
+		end
+	end
+	return nil
+end
+
+evdev = find_device ( { "/dev/input/by-path/platform-gpio_keys-event",
+			"/dev/input/by-path/platform-gpio-keys-event" } )
+if evdev then
+	logprint("Register evdev on "..evdev)
+	register("evdev", evdev,
+		 408, "restart_button",
+		 133, "media_button")
+else
+	logprint("No evdev device found")
+end
 
 register("system-status")
 
