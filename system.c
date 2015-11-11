@@ -37,7 +37,8 @@ static int system_init(int argc, const char **argv UNUSED)
 
 	register_command("system-status",
 			 "Signal system status",
-			 "",
+			 "Signal system status, options are:\n"
+			 "\tstart\n\tstop\n",
 			 system_status);
 	return 0;
 }
