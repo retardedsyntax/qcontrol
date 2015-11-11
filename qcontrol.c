@@ -714,7 +714,7 @@ int main(int argc, char **argv)
 			{0, 0, 0, 0}
 		};
 
-		int opt = getopt_long(argc, argv, "c:dfhv",
+		int opt = getopt_long(argc, argv, "c:dfhV",
 				      long_options, NULL);
 
 		if (opt == -1)
