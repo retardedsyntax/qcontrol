@@ -1,4 +1,12 @@
-see https://gitorious.org/qcontrol/
+Qcontrol
+========
+
+Qcontrol is a daemon and command line tool which controls the various
+peripherals that are present on many embedded NAS devices. It supports any
+peripheral which is driven by either serial port of GPIO, including
+lights, fans, LCDs and watchdogs. Although it primarily supports QNAP TS
+devices it is designed to be modular and adding support for other devices
+should be easy.
 
 Supported devices:
  - QNAP TS-109, TS-109 II, TS-209 and TS-209 II (ts209)
@@ -7,3 +15,4 @@ Supported devices:
  - QNAP TS-41x and TS-42x (ts41x)
  - Synology Diskstation and Rackstation (synology)
 
+Homepage: https://www.hellion.org.uk/qcontrol/
