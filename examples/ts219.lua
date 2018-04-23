@@ -38,6 +38,14 @@ register("system-status")
 -- Set to "false" to suppress the sounding of the buzzer
 buzzer = true
 
+-- Set to "false" if your device doesn't have a fan (TS-119 and HS-210)
+has_fan = true
+
+-- Turn off fan if there is no fan to avoid fan_error() being called
+if not has_fan then
+	piccmd("fanspeed", "stop")
+end
+
 function system_status( status )
 	logprint("System status: "..status)
 	if status == "start" then
@@ -128,6 +136,11 @@ end
 last_fan_setting = nil
 
 function setfan( temp, speed )
+	-- Do nothing if there's no fan
+	if not has_fan then
+		return
+	end
+
 	if ( ( not last_fan_setting ) or
 	     ( last_fan_setting ~= speed ) ) then
 		logprint(string.format("ts219: temperature %d setting fan to \"%s\"", temp, speed))
