@@ -1,5 +1,7 @@
 [Unit]
 Description=qcontrol
+Requires=qcontrold.service
+After=multi-user.target qcontrold.service
 # If the config file is there, we assume qcontrol works on this machine.
 ConditionPathExists=/etc/qcontrol.conf
 

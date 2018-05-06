@@ -1,9 +1,12 @@
 [Unit]
 Description=qcontrold
-Requires=dev-input-by\x2dpath-platform\x2dgpio\x2dkeys\x2devent.device
-After=dev-input-by\x2dpath-platform\x2dgpio\x2dkeys\x2devent.device
+Requires=dev-input-by\x2dpath-platform\x2dgpio_keys\x2devent.device
+After=dev-input-by\x2dpath-platform\x2dgpio_keys\x2devent.device
 # If the config file is there, we assume qcontrol works on this machine.
 ConditionPathExists=/etc/qcontrol.conf
 
 [Service]
 ExecStart=/usr/sbin/qcontrol -f
+
+[Install]
+WantedBy=multi-user.target
