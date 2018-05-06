@@ -104,9 +104,10 @@ function gpio_select(number, results)
 	local gpio=io.open(path)
 	if not gpio then
 		logprint("ts41x: "..path.." does not exist, trying to enable")
-		g = io.open("/sys/class/gpio/export")
+		gpioctl = "/sys/class/gpio/export"
+		g, err = io.open(gpioctl, "w")
 		if not g then
-			logprint("ts41x: unable to open gpio control file")
+			logprint("ts41x: unable to open gpio control file "..gpioctl..": "..err)
 			return evalfn(results[3])
 		end
 		g:write(number)
