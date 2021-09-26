@@ -5,35 +5,42 @@ CPPFLAGS += -DQCONTROL_VERSION=\"$(VERSION)\"
 
 PKG_CONFIG ?= pkg-config
 LDFLAGS  += -g
-LIBS     += -lpthread
-LIBS_STATIC += $(shell $(PKG_CONFIG) --variable=libdir lua5.1)/liblua5.1.a -lpthread -lm -ldl
 
-CFLAGS   += $(shell $(PKG_CONFIG) --cflags lua5.1)
-LIBS     += $(shell $(PKG_CONFIG) --libs lua5.1)
+CFLAGS       += $(shell $(PKG_CONFIG) --cflags lua5.1)
+LIBS_DYNAMIC += -lpthread $(shell $(PKG_CONFIG) --libs lua5.1)
+LIBS_STATIC  += -lpthread $(shell $(PKG_CONFIG) --variable=libdir lua5.1)/liblua5.1.a -lm -ldl
 
 ifeq ($(shell $(PKG_CONFIG) --exists libsystemd-daemon 2>/dev/null && echo 1),1)
-CPPFLAGS += -DHAVE_SYSTEMD
-CFLAGS   += $(shell $(PKG_CONFIG) --cflags libsystemd-daemon)
-LIBS     += $(shell $(PKG_CONFIG) --libs libsystemd-daemon)
+CPPFLAGS_DYNAMIC += -DHAVE_SYSTEMD
+CFLAGS_DYNAMIC   += $(shell $(PKG_CONFIG) --cflags libsystemd-daemon)
+LIBS_DYNAMIC     += $(shell $(PKG_CONFIG) --libs libsystemd-daemon)
 endif
 
 SOURCES=qcontrol.c system.c qnap-pic.c ts209.c ts219.c ts409.c ts41x.c evdev.c a125.c synology.c
-OBJECTS=$(SOURCES:.c=.o)
+OBJECTS_DYNAMIC=$(SOURCES:.c=.o-dyn)
+OBJECTS_STATIC=$(SOURCES:.c=.o-static)
 EXECUTABLE=qcontrol
 
 all:	$(SOURCES) $(EXECUTABLE)
 
-$(EXECUTABLE): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
+$(EXECUTABLE): $(OBJECTS_DYNAMIC)
+	$(CC) $(LDFLAGS) $(OBJECTS_DYNAMIC) $(LIBS_DYNAMIC) -o $@
 
-$(EXECUTABLE)-static: $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS_STATIC) -o $@
+$(EXECUTABLE)-static: $(OBJECTS_STATIC)
+	$(CC) $(LDFLAGS) $(OBJECTS_STATIC) $(LIBS_STATIC) -o $@
 
-.c.o:
+$(OBJECTS_DYNAMIC): CPPFLAGS += $(CPPFLAGS_DYNAMIC)
+$(OBJECTS_DYNAMIC): CFLAGS += $(CFLAGS_DYNAMIC)
+%.o-dyn: %.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< -o $@
+
+$(OBJECTS_STATIC): CPPFLAGS += $(CPPFLAGS_STATIC)
+$(OBJECTS_STATIC): CFLAGS += $(CFLAGS_STATIC)
+%.o-static: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE)-static
+	rm -f $(OBJECTS_DYNAMIC) $(OBJECTS_STATIC) $(EXECUTABLE) $(EXECUTABLE)-static
 
 dist: RELEASES := $(PWD)/../releases/
 dist: TARBALL := qcontrol-$(VERSION).tar

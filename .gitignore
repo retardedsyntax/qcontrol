@@ -1,2 +1,4 @@
-*.o
+*.o-dyn
+*.o-static
 qcontrol
+qcontrol-static
