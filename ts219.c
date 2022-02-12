@@ -45,13 +45,13 @@ static int ts219_read_serial_events(void)
 	case QNAP_PICSTS_FAN2_ERROR:
 	case QNAP_PICSTS_FAN3_ERROR:
 	case QNAP_PICSTS_FAN4_ERROR:
-		call_function("fan_error", "");
+		call_function("fan_error", "%d", (QNAP_PICSTS_FAN4_ERROR - buf[0]) / 2 + 1);
 		break;
 	case QNAP_PICSTS_FAN1_NORMAL:
 	case QNAP_PICSTS_FAN2_NORMAL:
 	case QNAP_PICSTS_FAN3_NORMAL:
 	case QNAP_PICSTS_FAN4_NORMAL:
-		call_function("fan_normal", "");
+		call_function("fan_normal", "%d", (QNAP_PICSTS_FAN4_NORMAL - buf[0]) / 2 + 1);
 		break;
 	case QNAP_PICSTS_SYS_TEMP_0 ... QNAP_PICSTS_SYS_TEMP_70:
 		call_function("temp", "%d", buf[0] - QNAP_PICSTS_SYS_TEMP_0);

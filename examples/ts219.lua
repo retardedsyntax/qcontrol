@@ -38,11 +38,14 @@ register("system-status")
 -- Set to "false" to suppress the sounding of the buzzer
 buzzer = true
 
--- Set to "false" if your device doesn't have a fan (TS-119 and HS-210)
-has_fan = true
+-- Set to "0" if your device doesn't have a fan (TS-119 and HS-210)
+-- Set to "1" for TS-210
+-- Default is "4"
+has_fan = 4
+logprint("Number of fans: ".. has_fan)
 
 -- Turn off fan if there is no fan to avoid fan_error() being called
-if not has_fan then
+if has_fan == 0 then
 	piccmd("fanspeed", "stop")
 end
 
@@ -75,12 +78,16 @@ end
 
 fanfail = 0
 
-function fan_error(  )
+function fan_error( fan_no  )
 	fanfail = fanfail + 1
 	if fanfail == 3 then
-		logprint("ts219: fan error")
-		piccmd("statusled", "red2hz")
-		piccmd("buzzer", "long")
+		if fan_no <= has_fan then
+			logprint("ts219: fan error, num:"..fan_no)
+			piccmd("statusled", "red2hz")
+			piccmd("buzzer", "long")
+		else
+			logprint("ts219: ignore non-existent fan error, num:"..fan_no)
+		end
 	else
 		if fanfail == 10 then
 			fanfail = 0
@@ -88,7 +95,8 @@ function fan_error(  )
 	end
 end
 
-function fan_normal(  )
+function fan_normal( fan_no )
+	logprint("ts219: fan normal, num:"..fan_no)
 	piccmd("statusled", "greenon")
 	fanfail = 0
 end
@@ -137,7 +145,7 @@ last_fan_setting = nil
 
 function setfan( temp, speed )
 	-- Do nothing if there's no fan
-	if not has_fan then
+	if has_fan == 0 then
 		return
 	end
 
