@@ -96,7 +96,6 @@ function fan_error( fan_no  )
 end
 
 function fan_normal( fan_no )
-	logprint("ts219: fan normal, num:"..fan_no)
 	piccmd("statusled", "greenon")
 	fanfail = 0
 end
