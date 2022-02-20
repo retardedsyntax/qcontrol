@@ -6,7 +6,7 @@ CPPFLAGS += -DQCONTROL_VERSION=\"$(VERSION)\"
 PKG_CONFIG ?= pkg-config
 LDFLAGS  += -g
 LIBS     += -lpthread
-LIBS_STATIC += /usr/lib/liblua5.1.a -lpthread -lm -ldl
+LIBS_STATIC += $(shell $(PKG_CONFIG) --variable=libdir lua5.1)/liblua5.1.a -lpthread -lm -ldl
 
 CFLAGS   += $(shell $(PKG_CONFIG) --cflags lua5.1)
 LIBS     += $(shell $(PKG_CONFIG) --libs lua5.1)
